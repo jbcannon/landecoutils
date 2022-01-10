@@ -10,5 +10,5 @@ Next, you should be able to get the latest released version of hurrecon from git
 
 ```
 install.packages('devtools')
-devtools::install_github('jbcannon/landecotools')
+devtools::install_github('jbcannon/landecoutils')
 ```
