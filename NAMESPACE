@@ -2,5 +2,6 @@
 
 export(find_ctg_centroids)
 export(find_las_centroid)
+export(segment_with_spanner)
 export(stitch_TLS_dir_to_LAS)
 export(stitch_TLS_dir_to_LAS_tiles)
