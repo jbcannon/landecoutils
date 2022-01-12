@@ -28,7 +28,7 @@ segment_with_spanner = function(las, bnd, stemmap_shp, tree_seg_las=NULL, thread
   #Find tree locations and segment tree points with spanner functions 
   boles = lidR::filter_poi(las, Intensity>40000)
   set_lidr_threads(threads)
-  tree_locs = spanner::get_raster_eigen_treelocs(boles, dens_threshold = 0.1)
+  tree_locs = spanner::get_raster_eigen_treelocs(boles, dens_threshold = 0.001)
   las = spanner::segment_graph(las, tree_locs,
                                k = 50,
                                distance.threshold = 0.5,
@@ -38,7 +38,7 @@ segment_with_spanner = function(las, bnd, stemmap_shp, tree_seg_las=NULL, thread
   # Create stemmap and clip to interior boundary
   las = lidR::add_lasattribute(las, las$treeID, 'TreeID', 'spanner TreeID')
   las = remove_lasattribute(las, 'treeID')
-  las = TreeLS::stemPoints(las, method = stm.eigen.voxel())
+  las = TreeLS::stemPoints(las, method = TreeLS::stm.eigen.voxel())
   inv = TreeLS::tlsInventory(las)
   stemmap = sf::st_as_sf(inv, coords = c('X', 'Y'), crs=sf::st_crs(las))
   st_crs(bnd) = sf::st_crs(las)
@@ -51,7 +51,7 @@ segment_with_spanner = function(las, bnd, stemmap_shp, tree_seg_las=NULL, thread
     clipout_trunks = sf::st_buffer(stemmap, dist=stemmap$Radius*2)
     las = lidR::classify_poi(las, lidR::LASLOWVEGETATION, roi = clipout_trunks, poi = formula(~Z<1.5), inverse_roi=TRUE)
     tree_seg = lidR::filter_poi(las, TreeID %in% stemmap$TreeID & Classification != lidR::LASLOWVEGETATION)
-    tree_seg = las_update(tree_seg)
+    tree_seg = lidR::las_update(tree_seg)
     lidR::writeLAS(tree_seg, tree_seg_las)
   }
   return(stemmap)
