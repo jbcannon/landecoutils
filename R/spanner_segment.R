@@ -14,9 +14,9 @@
 #' @param stemmap_shp a path name (.shp) with the desired output of the resulting stem map.
 #' @param tree_seg_las a path name (.las) for the output of segmented trees
 #' @param threads see `lidR::set_lidR_threads`. Positive scalar. Default 0 means use all
-#'  CPU available. Values > 1 mean using n cores, values in (0, 1) mean using a 
-#'  fraction of the cores e.g. 0.5 = half.
-#'  @export
+#' CPU available. Values > 1 mean using n cores, values in (0, 1) mean using a 
+#' fraction of the cores e.g. 0.5 = half.
+#' @export
 segment_with_spanner = function(las, bnd, stemmap_shp, tree_seg_las=NULL, threads=0.5){
   # Load and pre-process las
   las = lidR::classify_ground(las, lidR::csf(class_threshold=0.1))

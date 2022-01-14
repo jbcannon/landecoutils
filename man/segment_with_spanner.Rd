@@ -18,8 +18,7 @@ Generally \code{bnd} is smaller than the \code{bbox} of \code{las} to adjust edg
 
 \item{threads}{see \code{lidR::set_lidR_threads}. Positive scalar. Default 0 means use all
 CPU available. Values > 1 mean using n cores, values in (0, 1) mean using a
-fraction of the cores e.g. 0.5 = half.
-@export}
+fraction of the cores e.g. 0.5 = half.}
 }
 \description{
 This is code to make it more convenient to pre-process, stem map, and
