@@ -20,8 +20,8 @@ clip_voi = function(las, voi, res){
   slices = list()
   for(z in seq(min(vox$Z), max(vox$Z) - res, res)) {
     slice_vox = lidR::filter_poi(vox, Z == z)
-    hull = lidR::grid_metrics(slice_vox, ~length(Z)>0, res = res, start=ext(grid_temp)[c(1,3)])
-    hull = terra::rast(hull)
+    hull = lidR::grid_metrics(slice_vox, ~length(Z)>0, res = res, start=terra::ext(grid_temp)[c(1,3)])
+    hull = terra::rsast(hull)
     hull = terra::as.points(terra::as.polygons(hull))
     hull = sf::st_as_sf(terra::convHull(hull))
     slice_highres = suppressWarnings(lidR::clip_roi(lidR::filter_poi(high_res, Z < (z+res) & Z > (z-res)), hull))
