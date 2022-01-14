@@ -10,6 +10,23 @@
 #' @param voi a `LAS` object often with lower resolution and extent from which
 #' to generate a volume to clip `las`
 #' @param `res` the resolution at which the `voi` is generated
+#' @examples 
+#' library(landecoutils)
+#' library(lidR)
+#' 
+#' # Large full resolution LAS object
+#' full_las = readTLSLAS('path/to/highres.las')
+#' 
+#' # smaller lower resolution LAS object
+#' voi = readTLSLAS('path/to/lowres.las')
+#' 
+#' # view point density an extent of each las
+#' nrow(full_las@data);extent(full_las)
+#' nrow(voi@data);extent(voi)
+#' 
+#' # Clip voi and view point density and extent
+#' high_res_voi = clip_voi(full_las, voi, res=0.5)
+#' nrow(high_res_voi@data); extent(high_res_voi)
 #' @export
 clip_voi = function(las, voi, res){
   vox = lidR::voxelize_points(voi, res)

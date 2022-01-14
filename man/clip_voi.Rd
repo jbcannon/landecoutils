@@ -22,3 +22,21 @@ LAS objects than the original files, so this function can be used to clip
 a low resolution segmentated LAS object and retrieve the volume specified from
 a higher resolution LAS.
 }
+\examples{
+library(landecoutils)
+library(lidR)
+
+# Large full resolution LAS object
+full_las = readTLSLAS('path/to/highres.las')
+
+# smaller lower resolution LAS object
+voi = readTLSLAS('path/to/lowres.las')
+
+# view point density an extent of each las
+nrow(full_las@data);extent(full_las)
+nrow(voi@data);extent(voi)
+
+# Clip voi and view point density and extent
+high_res_voi = clip_voi(full_las, voi, res=0.5)
+nrow(high_res_voi@data); extent(high_res_voi)
+}
