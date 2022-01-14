@@ -19,7 +19,6 @@
 #'  @export
 segment_with_spanner = function(las, bnd, stemmap_shp, tree_seg_las=NULL, threads=0.5){
   # Load and pre-process las
-  las = lidR::readLAS(in_las, filter='-thin_with_voxel 0.02')
   las = lidR::classify_ground(las, lidR::csf(class_threshold=0.1))
   dem = lidR::grid_terrain(las, res=0.1, lidR::tin())
   las = lidR::normalize_height(las, lidR::tin())
