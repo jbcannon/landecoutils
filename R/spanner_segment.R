@@ -27,7 +27,7 @@ segment_with_spanner = function(las, bnd, stemmap_shp, tree_seg_las=NULL, thread
   #Find tree locations and segment tree points with spanner functions 
   boles = lidR::filter_poi(las, Intensity>40000)
   set_lidr_threads(threads)
-  tree_locs = spanner::get_raster_eigen_treelocs(boles, res=0., pt_spacing=0.01,
+  tree_locs = spanner::get_raster_eigen_treelocs(boles, res=0.1, pt_spacing=0.01,
                                                  dens_threshold = 0, eigen_threshold = 0.9,
                                                  grid_slice_min=1, grid_slice_max=2,
                                                  minimum_polygon_area = 0.01)
