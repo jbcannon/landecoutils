@@ -39,7 +39,7 @@ segment_with_spanner = function(las, bnd, stemmap_shp, tree_seg_las=NULL, thread
   # Create stemmap and clip to interior boundary
   las = lidR::add_lasattribute(las, las$treeID, 'TreeID', 'spanner TreeID')
   las = remove_lasattribute(las, 'treeID')
-  las = TreeLS::stemPoints(las, method = TreeLS::stm.eigen.voxel())
+  las = TreeLS::stemPoints(las, method = TreeLS::stm.hough())
   inv = TreeLS::tlsInventory(las)
   stemmap = sf::st_as_sf(inv, coords = c('X', 'Y'), crs=sf::st_crs(las))
   st_crs(bnd) = sf::st_crs(las)
