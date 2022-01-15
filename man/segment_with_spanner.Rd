@@ -4,7 +4,7 @@
 \alias{segment_with_spanner}
 \title{Create a stem map from a TLS scan tile using spanner.}
 \usage{
-segment_with_spanner(las, bnd, stemmap_shp, tree_seg_las = NULL, threads = 0.5)
+segment_with_spanner(las, bnd, tree_seg = TRUE, threads = 0.5)
 }
 \arguments{
 \item{las}{a \code{LAS} object not much larger than 0.2 ha}
@@ -12,9 +12,8 @@ segment_with_spanner(las, bnd, stemmap_shp, tree_seg_las = NULL, threads = 0.5)
 \item{bnd}{an \code{sf} object representing the \emph{interior} boundary of the study area.
 Generally \code{bnd} is smaller than the \code{bbox} of \code{las} to adjust edge effects}
 
-\item{stemmap_shp}{a path name (.shp) with the desired output of the resulting stem map.}
-
-\item{tree_seg_las}{a path name (.las) for the output of segmented trees}
+\item{tree_seg}{logical. if \code{TRUE} a LAS object with segment treees is returned
+along with stemamp}
 
 \item{threads}{see \code{lidR::set_lidR_threads}. Positive scalar. Default 0 means use all
 CPU available. Values > 1 mean using n cores, values in (0, 1) mean using a

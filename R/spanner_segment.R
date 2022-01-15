@@ -11,13 +11,13 @@
 #' @param las a `LAS` object not much larger than 0.2 ha
 #' @param bnd an `sf` object representing the *interior* boundary of the study area.
 #' Generally `bnd` is smaller than the `bbox` of `las` to adjust edge effects
-#' @param stemmap_shp a path name (.shp) with the desired output of the resulting stem map.
-#' @param tree_seg_las a path name (.las) for the output of segmented trees
+#' @param tree_seg logical. if `TRUE` a LAS object with segment treees is returned
+#' along with stemamp
 #' @param threads see `lidR::set_lidR_threads`. Positive scalar. Default 0 means use all
 #' CPU available. Values > 1 mean using n cores, values in (0, 1) mean using a 
 #' fraction of the cores e.g. 0.5 = half.
 #' @export
-segment_with_spanner = function(las, bnd, stemmap_shp, tree_seg_las=NULL, threads=0.5){
+segment_with_spanner = function(las, bnd, tree_seg=TRUE, threads=0.5){
   # Load and pre-process las
   las = lidR::classify_ground(las, lidR::csf(class_threshold=0.1))
   dem = lidR::grid_terrain(las, res=0.1, lidR::tin())
@@ -45,16 +45,12 @@ segment_with_spanner = function(las, bnd, stemmap_shp, tree_seg_las=NULL, thread
   st_crs(bnd) = sf::st_crs(las)
   stemmap = subset(stemmap, !is.na(Radius))
   stemmap = sf::st_intersection(stemmap, bnd)
-  sf::st_write(stemmap, stemmap_shp, delete_layer=TRUE)
-  
-  #Cleanup and output las with tree segmentation (optional)
-  if(!is.null(tree_seg_las)) {
+  if(!tree_seg) return (list(shp=stemmap)) else {
     clipout_trunks = sf::st_buffer(stemmap, dist=stemmap$Radius*2)
     las = lidR::classify_poi(las, lidR::LASLOWVEGETATION, roi = clipout_trunks, poi = formula(~Z<1.5), inverse_roi=TRUE)
     tree_seg = lidR::filter_poi(las, TreeID %in% stemmap$TreeID & Classification != lidR::LASLOWVEGETATION)
     tree_seg = lidR::las_update(tree_seg)
-    lidR::writeLAS(tree_seg, tree_seg_las)
+    return(list(shp=stemmap, las=tree_seg))
   }
-  return(stemmap)
 }
 
