@@ -207,9 +207,10 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, buffer = 10
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
   for(t in 1:nrow(grid)) {
     # Load and display tile
-    cat('loading tile', t, 'of', nrow(grid), '\n')
+    cat('\nloading tile', t, 'of', nrow(grid), '\n')
     tile = grid[t,]
     scans_to_load = scan_locations[sf::st_intersects(tile, scan_locations, sparse = FALSE),]
+    if(nrow(scans_to_load)<1) next
     plot(grid$geom)
     plot(bnd$geom, add=TRUE, lwd=2)
     plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
@@ -227,6 +228,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, buffer = 10
     }
     
     #To avoid rbind errors, Find common columns among scans and keep only those
+    combined_las = combined_las[!sapply(combined_las, is.null)]
     common_cols = lapply(combined_las, function(x) colnames(x@data))
     common_cols = Reduce(intersect, common_cols)
     combined_las = lapply(combined_las, function(x) {
