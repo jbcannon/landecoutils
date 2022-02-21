@@ -189,7 +189,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, buffer = 10
     scan_locations = list()
     i=1
     for(fn in ctg$filename) {
-      cat('.....',i, 'of', length(ctg), '\n')
+      cat('.....',i, 'of', length(ctg$filename), '\n')
       scan_centroid = suppressMessages(find_las_centroid(fn))
       scan_location = sf::st_buffer(scan_centroid, dist=max_scan_distance)
       scan_location$fn=fn
@@ -224,7 +224,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, buffer = 10
     for(i in 1:nrow(scans_to_load)) {
       cat('.....appending scan', i, 'of', nrow(scans_to_load), '\n')  
       roi = sf::st_intersection(tile, scans_to_load[i,])
-      combined_las[[i]] = lidR::clip_roi(lidR::readTLSLAS(scans_to_load[i,]$fn, filter=filt), roi)
+      combined_las[[i]] = lidR::clip_roi(lidR::readLAS(scans_to_load[i,]$fn, filter=filt), roi)
     }
     
     #To avoid rbind errors, Find common columns among scans and keep only those
