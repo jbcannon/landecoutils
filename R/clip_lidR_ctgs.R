@@ -73,7 +73,7 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   # Load TLS scans from directory and clip to roi.. rbind, and write to file.
   i = 1
   combined_las = list()
-  if(is.null(scan_locations)) scan_locations = suppessWarnings(find_ctg_centroids(ctg))
+  if(is.null(scan_locations)) scan_locations = suppressWarnings(find_ctg_centroids(ctg))
   for(fn in ctg$filename) {
     cat('reading las', i, 'of', length(ctg$filename), '\n')
     scan_location = sf::st_buffer(scan_locations[i,], dist=max_scan_distance)
