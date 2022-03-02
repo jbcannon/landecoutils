@@ -1,3 +1,27 @@
+#' Check for and create a lax index from a directory of LAS files
+#' 
+#' This function takes a directory of LAS files and checks to see if they are
+#' accomponied by .LAX index files. Indexing greatly increases the processing
+#' speed for many tasks. 
+#' @param las_dir path to a directory containing .LAS or .LAZ files to index
+#' @examples 
+#' index_las('E:/my/las/dir/')
+#' @export
+index_las = function(las_dir) {
+  # Generate list of las that need indexing
+  las_dir = 'E:/BigPlot_LASb/'
+  las_list = list.files(las_dir, '.las|.laz', full.names = TRUE)
+  lax_list = list.files(las_dir, '.lax')
+  needs_lax = las_list[!gsub('.las|.laz', '', basename(las_list)) %in% gsub('.lax', '', lax_list)]
+  cat(length(las_list)-length(needs_lax), 'indexes found. Generating', length(needs_lax), 'indexes\n')
+  for(fn in needs_lax) {
+    cat('\tindexing ', which(needs_lax==fn), 'of', length(needs_lax), ':', basename(fn), '\n')
+    lidR::writeLAS(lidR::readTLSLAS(fn), fn, index=TRUE)
+  }
+  cat('indexing complete')
+  return(NULL)
+}
+
 #' Find scan locations from a `LAScatalog`
 #' 
 #' This function does the same as `las_find_centroids` but it works on a
