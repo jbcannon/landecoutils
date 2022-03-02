@@ -7,15 +7,19 @@
 #' @examples 
 #' index_las('E:/my/las/dir/')
 #' @export
-index_las = function(las_dir) {
+index_las = function(las_dir, n_cores) {
   # Generate list of las that need indexing
   las_dir = 'E:/BigPlot_LASb/'
   las_list = list.files(las_dir, '.las|.laz', full.names = TRUE)
   lax_list = list.files(las_dir, '.lax')
   needs_lax = las_list[!gsub('.las|.laz', '', basename(las_list)) %in% gsub('.lax', '', lax_list)]
   cat(length(las_list)-length(needs_lax), 'indexes found. Generating', length(needs_lax), 'indexes\n')
-  for(fn in needs_lax) {
-    cat('\tindexing ', which(needs_lax==fn), 'of', length(needs_lax), ':', basename(fn), '\n')
+  
+  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
+  
+  #--> Loop in parallel
+  `%dopar%` <- foreach::`%dopar%`
+  foreach::foreach(fn = needs_lax) %dopar% {
     lidR::writeLAS(lidR::readTLSLAS(fn), fn, index=TRUE)
   }
   cat('indexing complete')
