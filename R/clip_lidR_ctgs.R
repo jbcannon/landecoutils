@@ -9,7 +9,6 @@
 #' @export
 index_las = function(las_dir, n_cores) {
   # Generate list of las that need indexing
-  las_dir = 'E:/BigPlot_LASb/'
   las_list = list.files(las_dir, '.las|.laz', full.names = TRUE)
   lax_list = list.files(las_dir, '.lax')
   needs_lax = las_list[!gsub('.las|.laz', '', basename(las_list)) %in% gsub('.lax', '', lax_list)]
