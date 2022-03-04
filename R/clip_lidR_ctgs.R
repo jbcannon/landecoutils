@@ -1,3 +1,22 @@
+#' Compress a folder of LAS files to LAZ format.
+#' 
+#' This function takes a directory of LAS files and compresses them to LAZ.
+#' The original LAS files are deleted assuming you want to save space. 
+#' @param las_dir path to a directory containing .LAS files to compress
+#' @examples 
+#' compress_las('E:/my/las/dir/')
+#' @export
+compress_las = function(las_dir, n_cores, index=TRUE) {
+  doParallel::registerDoParallel(parallel::makeCluster(15))
+  files = list.files(las_dir, '.laz', full.names=TRUE)
+  foreach(fn=files) %dopar% {
+    new_laz_fn = gsub('.las', '.laz', fn)
+    lidR::writeLAS(lidR::readLAS(fn), new_laz_fn, index=index)
+    if(file.exists(new_laz_fn)) unlink(fn)
+    return(NULL)
+  }
+}
+
 #' Check for and create a lax index from a directory of LAS files
 #' 
 #' This function takes a directory of LAS files and checks to see if they are
