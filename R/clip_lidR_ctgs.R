@@ -289,7 +289,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     #write tile to disk
     cat('.....scans stitched. writing tile to disk')
     out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.las')
-    lidR::writeLAS(las_update(combined_las), out_las, index=index)
+    lidR::writeLAS(lidR::las_update(combined_las), out_las, index=index)
   }
   return(NULL)
 }
