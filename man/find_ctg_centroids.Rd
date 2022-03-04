@@ -4,12 +4,12 @@
 \alias{find_ctg_centroids}
 \title{Find scan locations from a \code{LAScatalog}}
 \usage{
-find_ctg_centroids(ctg, ncores = 1, subsample = 10000)
+find_ctg_centroids(ctg, n_cores = 1, subsample = 10000)
 }
 \arguments{
 \item{ctg}{a \code{lidR::LAScatalog} object for which you want to find a centroids of all scan locations}
 
-\item{ncores}{a number of cores to use for parallel processing.}
+\item{n_cores}{a number of cores to use for parallel processing.}
 
 \item{subsample}{drop every \code{nth} return to speed up processing time. See \code{las_find_centroids}}
 }
@@ -22,6 +22,6 @@ Result of this function can be used as an input to \code{stitch_TLS_dir_to_LAS} 
 \examples{
 library(sf)
 ctg = readTLScatalog('path/to/las/catalog')
-scan_locations = find_ctg_centroids(ctg, ncores=4)
+scan_locations = find_ctg_centroids(ctg, n_cores=4)
 plot(scan_locations$geom)
 }

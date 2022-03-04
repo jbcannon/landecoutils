@@ -9,6 +9,7 @@ stitch_TLS_dir_to_LAS_tiles(
   out_dir,
   bnd,
   tile_size,
+  n_cores,
   buffer = 10,
   max_scan_distance = 60,
   index = TRUE,
@@ -21,6 +22,8 @@ stitch_TLS_dir_to_LAS_tiles(
 \item{out_dir}{directory to output LAS tiles (no ending '/' in path).}
 
 \item{bnd}{an \code{sf} object denoting the region of interest. Only UTM units tested}
+
+\item{n_cores}{number of cores to use in parallel processing}
 
 \item{buffer}{width of buffer to apply to \code{bnd} using \code{sf::st_buffer} This
 allows inclusion of TLS data outside study area to address edge effects.}

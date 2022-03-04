@@ -7,7 +7,7 @@
 #' compress_las('E:/my/las/dir/')
 #' @export
 compress_las = function(las_dir, n_cores, index=TRUE) {
-  doParallel::registerDoParallel(parallel::makeCluster(15))
+  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
   files = list.files(las_dir, '.laz', full.names=TRUE)
   `%dopar%` = foreach::`%dopar%`
   foreach(fn=files) %dopar% {
@@ -33,10 +33,9 @@ index_las = function(las_dir, n_cores) {
   lax_list = list.files(las_dir, '.lax')
   needs_lax = las_list[!gsub('.las|.laz', '', basename(las_list)) %in% gsub('.lax', '', lax_list)]
   cat(length(las_list)-length(needs_lax), 'indexes found. Generating', length(needs_lax), 'indexes\n')
-  
   #--> Loop in parallel
   doParallel::registerDoParallel(parallel::makeCluster(n_cores))
-  `%dopar%` <- foreach::`%dopar%`
+  `%dopar%` = foreach::`%dopar%`
   foreach::foreach(fn = needs_lax) %dopar% {
     lidR::writeLAS(lidR::readTLSLAS(fn), fn, index=TRUE)
   }
@@ -52,24 +51,23 @@ index_las = function(las_dir, n_cores) {
 #' `stitch_TLS_dir_to_LAS_tile` to increase speed.
 #' 
 #' @param ctg a `lidR::LAScatalog` object for which you want to find a centroids of all scan locations
-#' @param ncores a number of cores to use for parallel processing.
+#' @param n_cores a number of cores to use for parallel processing.
 #' @param subsample drop every `nth` return to speed up processing time. See `las_find_centroids`
 #' @examples 
 #' library(sf)
 #' ctg = readTLScatalog('path/to/las/catalog')
-#' scan_locations = find_ctg_centroids(ctg, ncores=4)
+#' scan_locations = find_ctg_centroids(ctg, n_cores=4)
 #' plot(scan_locations$geom)
 #' @export
-find_ctg_centroids = function(ctg, ncores=1, subsample=1e4) {
+find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
   if(subsample>1000) warning('Only ', round(1/subsample*100,3), '% of cloud used, centroid may be imprecise')
   s = as.character(format(subsample, scientific=FALSE))
   filt = paste0('-keep_every_nth ', s)
   centroids = list()
-  doParallel::registerDoParallel(parallel::makeCluster(ncores))
+  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
   `%dopar%` = foreach::`%dopar%`
   centroids = foreach(fn = ctg$filename) %dopar% {
     return(suppressWarnings(find_las_centroid(fn, subsample=subsample)))
-    
   }
   centroids = do.call(rbind, centroids)
   return(centroids)
@@ -190,6 +188,7 @@ find_las_centroid = function(las, subsample=1e5) {
 #' @param bnd an `sf` object denoting the region of interest. Only UTM units tested
 #' @param buffer width of buffer to apply to `bnd` using `sf::st_buffer` This
 #' allows inclusion of TLS data outside study area to address edge effects.
+#' @param n_cores number of cores to use in parallel processing
 #' @param max_scan_distance maximum distance from scan to be included. Evaluated using `find_las_centroid()`
 #' @param index boolean. Also write a lax file to index the points in the files. see `lidR::writeLAS`
 #' @examples 
@@ -198,7 +197,7 @@ find_las_centroid = function(las, subsample=1e5) {
 #' bnd = sf::st_read('plot_boundary.shp')
 #' stitch_TLS_dir_to_LAS_tiles(ctg, 'output_tiles', bnd, tile_size = 30)
 #' @export
-stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, buffer = 10, max_scan_distance=60, index=TRUE, scan_locations=NULL) {
+stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, buffer = 10, max_scan_distance=60, index=TRUE, scan_locations=NULL) {
   #require(lidR)  
   #require(sf)
   
@@ -252,7 +251,10 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, buffer = 10
   Sys.sleep(0.5)
   
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
-  for(t in 1:nrow(grid)) {
+  
+  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
+  `%dopar%` = foreach::`%dopar%`
+  foreach(t=1:nrow(grid)) %dopar% {
     # Load and display tile
     cat('\nloading tile', t, 'of', nrow(grid), '\n')
     tile = grid[t,]
