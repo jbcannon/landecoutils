@@ -9,6 +9,7 @@
 compress_las = function(las_dir, n_cores, index=TRUE) {
   doParallel::registerDoParallel(parallel::makeCluster(15))
   files = list.files(las_dir, '.laz', full.names=TRUE)
+  `%dopar%` = foreach::`%dopar%`
   foreach(fn=files) %dopar% {
     new_laz_fn = gsub('.las', '.laz', fn)
     lidR::writeLAS(lidR::readLAS(fn), new_laz_fn, index=index)
@@ -33,9 +34,8 @@ index_las = function(las_dir, n_cores) {
   needs_lax = las_list[!gsub('.las|.laz', '', basename(las_list)) %in% gsub('.lax', '', lax_list)]
   cat(length(las_list)-length(needs_lax), 'indexes found. Generating', length(needs_lax), 'indexes\n')
   
-  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
-  
   #--> Loop in parallel
+  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
   `%dopar%` <- foreach::`%dopar%`
   foreach::foreach(fn = needs_lax) %dopar% {
     lidR::writeLAS(lidR::readTLSLAS(fn), fn, index=TRUE)
@@ -52,23 +52,24 @@ index_las = function(las_dir, n_cores) {
 #' `stitch_TLS_dir_to_LAS_tile` to increase speed.
 #' 
 #' @param ctg a `lidR::LAScatalog` object for which you want to find a centroids of all scan locations
+#' @param ncores a number of cores to use for parallel processing.
 #' @param subsample drop every `nth` return to speed up processing time. See `las_find_centroids`
 #' @examples 
 #' library(sf)
 #' ctg = readTLScatalog('path/to/las/catalog')
-#' scan_locations = find_ctg_centroids(ctg)
+#' scan_locations = find_ctg_centroids(ctg, ncores=4)
 #' plot(scan_locations$geom)
 #' @export
-find_ctg_centroids = function(ctg, subsample=1e5) {
+find_ctg_centroids = function(ctg, ncores=1, subsample=1e4) {
   if(subsample>1000) warning('Only ', round(1/subsample*100,3), '% of cloud used, centroid may be imprecise')
   s = as.character(format(subsample, scientific=FALSE))
   filt = paste0('-keep_every_nth ', s)
   centroids = list()
-  i=1
-  for(fn in ctg$filename) {
-    cat('finding centroid for scan', i, 'of', length(ctg$filename), '\n\t', basename(fn),'\n')
-    centroids[[fn]] = suppressWarnings(find_las_centroid(fn, subsample=subsample))
-    i=i+1
+  doParallel::registerDoParallel(parallel::makeCluster(ncores))
+  `%dopar%` = foreach::`%dopar%`
+  centroids = foreach(fn = ctg$filename) %dopar% {
+    return(suppressWarnings(find_las_centroid(fn, subsample=subsample)))
+    
   }
   centroids = do.call(rbind, centroids)
   return(centroids)
