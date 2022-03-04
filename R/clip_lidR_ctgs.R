@@ -138,7 +138,7 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
     return(x)})
   combined_las = do.call(rbind,combined_las)
   combined_las@header@VLR = list()
-  lidR::writeLAS(las_update(combined_las), out_las, index=index)
+  lidR::writeLAS(lidR::las_update(combined_las), out_las, index=index)
   cat('combined las written to', out_las, '\n')
   return(NULL)
 }
