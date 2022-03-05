@@ -8,7 +8,7 @@
 #' @export
 compress_las = function(las_dir, n_cores, index=TRUE) {
   doParallel::registerDoParallel(parallel::makeCluster(n_cores))
-  files = list.files(las_dir, '.laz', full.names=TRUE)
+  files = list.files(las_dir, '.las', full.names=TRUE)
   `%dopar%` = foreach::`%dopar%`
   foreach(fn=files) %dopar% {
     new_laz_fn = gsub('.las', '.laz', fn)
