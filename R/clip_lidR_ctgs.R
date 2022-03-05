@@ -263,7 +263,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   
   doParallel::registerDoParallel(parallel::makeCluster(n_cores))
   `%dopar%` = foreach::`%dopar%`
-  foreach(t=todo_list) %dopar% {
+  foreach(t=todo_list, .errorhandling = 'pass') %dopar% {
     # Load and display tile
     cat('\nloading tile', t, 'of', nrow(grid), '\n')
     tile = grid[t,]
