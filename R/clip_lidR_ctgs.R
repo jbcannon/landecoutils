@@ -258,8 +258,11 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     # Load and display tile
     cat('\nloading tile', t, 'of', nrow(grid), '\n')
     tile = grid[t,]
+    ex = round(sf::st_bbox(tile))
+    out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.las')
+    if(file.exists(out_las)) return(NULL)
     scans_to_load = scan_locations[sf::st_intersects(tile, scan_locations, sparse = FALSE),]
-    if(nrow(scans_to_load)<1) next
+    if(nrow(scans_to_load)<1) return(NULL)
     plot(grid$geom)
     plot(bnd$geom, add=TRUE, lwd=2)
     plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
@@ -268,7 +271,6 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     
     #loop through relevant scans, clip and 
     combined_las = list()
-    ex = round(sf::st_bbox(tile))
     filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
     for(i in 1:nrow(scans_to_load)) {
       cat('.....appending scan', i, 'of', nrow(scans_to_load), '\n')  
@@ -288,8 +290,8 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
 
     #write tile to disk
     cat('.....scans stitched. writing tile to disk')
-    out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.las')
     lidR::writeLAS(lidR::las_update(combined_las), out_las, index=index)
+    return(NULL)
   }
   return(NULL)
 }
