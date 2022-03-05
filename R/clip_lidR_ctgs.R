@@ -229,6 +229,15 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   plot(grid$geometry, add=TRUE, border='white')
   Sys.sleep(0.5)
   
+  #Check to see what all is already complete
+  todo_list = c()
+  for(t in 1:nrow(grid)){
+    tile = grid[t,]
+    ex = round(sf::st_bbox(tile))
+    out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.las')
+    !file.exists(if(out_las)) todo_list = c(todo_list, t)
+  }
+  
   #Get all scan centroids once
   if(is.null(scan_locations)) {
     cat('finding all scan footprints within', max_scan_distance, 'meters\n')
@@ -254,7 +263,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   
   doParallel::registerDoParallel(parallel::makeCluster(n_cores))
   `%dopar%` = foreach::`%dopar%`
-  foreach(t=1:nrow(grid)) %dopar% {
+  foreach(t=todo_list) %dopar% {
     # Load and display tile
     cat('\nloading tile', t, 'of', nrow(grid), '\n')
     tile = grid[t,]
