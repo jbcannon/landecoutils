@@ -233,7 +233,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   todo_list = c()
   for(t in 1:nrow(grid)){
     tile = grid[t,]
-    ex = round(sf::st_bbox(tile))
+    ex = round(sf::st_bbox(tile),1)
     out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.laz')
     out_las = gsub('\\/\\/', '\\/', out_las)
     if(!file.exists(out_las))  todo_list = c(todo_list, t)
