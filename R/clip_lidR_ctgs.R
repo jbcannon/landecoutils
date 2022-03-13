@@ -272,6 +272,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     tile = grid[t,]
     ex = sf::st_bbox(tile)
     out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.laz')
+    out_las = gsub('\\/\\/', '\\/', out_las)
     if(file.exists(out_las)) return(NULL)
     scans_to_load = scan_locations[sf::st_intersects(tile, scan_locations, sparse = FALSE),]
     if(nrow(scans_to_load)<1) return(NULL)
