@@ -258,6 +258,8 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   plot(grid$geom)
   plot(bnd$geom, lwd=2, border='black', add=TRUE)
   plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
+  plot(grid$geom)
+  plot(bnd$geom, lwd = 2, border = "black", add = TRUE)
   Sys.sleep(0.5)
   
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
