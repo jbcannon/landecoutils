@@ -224,10 +224,10 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   grid = grid[sf::st_intersects(grid, bnd_buff, sparse=FALSE),]
   
   #Display catalog and grid
-  lidR::plot(ctg)
-  plot(bnd$geometry, add=TRUE, lwd=2, border='white')
-  plot(grid$geometry, add=TRUE, border='white')
-  Sys.sleep(0.5)
+  #lidR::plot(ctg) #these calls to plot were crashing things in one instance. Need to look into that.
+  #plot(bnd$geometry, add=TRUE, lwd=2, border='white')
+  #plot(grid$geometry, add=TRUE, border='white')
+  #Sys.sleep(0.5)
   
   #Check to see what all is already complete
   todo_list = c()
@@ -255,11 +255,11 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   }
   
   scan_locations = sf::st_buffer(scan_locations, dist=max_scan_distance)
-  plot(grid$geom)
-  plot(bnd$geom, lwd=2, border='black', add=TRUE)
-  plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
-  plot(grid$geom)
-  plot(bnd$geom, lwd = 2, border = "black", add = TRUE)
+  #plot(grid$geom)
+  #plot(bnd$geom, lwd=2, border='black', add=TRUE)
+  #plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
+  #plot(grid$geom)
+  #plot(bnd$geom, lwd = 2, border = "black", add = TRUE)
   Sys.sleep(0.5)
   
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
@@ -276,11 +276,11 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     if(file.exists(out_las)) return(NULL)
     scans_to_load = scan_locations[sf::st_intersects(tile, scan_locations, sparse = FALSE),]
     if(nrow(scans_to_load)<1) return(NULL)
-    plot(grid$geom)
-    plot(bnd$geom, add=TRUE, lwd=2)
-    plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
-    plot(grid[1:t,]$geom, add=TRUE, col='grey')
-    plot(tile,add=TRUE, col='yellow')
+    #plot(grid$geom)
+    #plot(bnd$geom, add=TRUE, lwd=2)
+    #plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
+    #plot(grid[1:t,]$geom, add=TRUE, col='grey')
+    #plot(tile,add=TRUE, col='yellow')
     
     #loop through relevant scans, clip and 
     combined_las = list()
