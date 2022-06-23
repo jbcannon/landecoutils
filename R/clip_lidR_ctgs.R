@@ -20,19 +20,17 @@ compress_las = function(las_dir, n_cores, index=TRUE) {
 
 #' Check for and create a lax index from a directory of LAS files
 #' 
-#' This function takes a directory of LAS files and checks to see if they are
-#' accomponied by .LAX index files. Indexing greatly increases the processing
-#' speed for many tasks. 
+#' Check for LAX index files and create them as necessary.  Indexing greatly
+#' increases the processingAn earlier version of this function overwrote the
+#' original LAS resulting in possible corruption of the original file if the
+#' process was interrupted. This updated version uses temporary files to avoid
+#' this problem.
 #' @param dir path to a directory containing .LAS or .LAZ files to index
 #' @param write_lax indicates if .lax file should be written (`TRUE`), or only 
 #' checked for (`FALSE`)
 #' @examples 
 #' check_for_lax('E:/my/las/dir/')
 #' @export
-# Check for LAX index files and create them as necessary. An earlier version
-# of this function overwrote the original LAS resulting in possible corruption
-# of the original file if the process was interrupted. This updated version uses
-# temporary files to avoid this problem.
 check_for_lax = function(dir, write_lax=TRUE) {
   #check inputs for validity
   if(!write_lax %in% c(TRUE, FALSE)) stop('write_lax must be TRUE/FALSE')
