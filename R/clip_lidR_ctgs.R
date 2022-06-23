@@ -23,24 +23,50 @@ compress_las = function(las_dir, n_cores, index=TRUE) {
 #' This function takes a directory of LAS files and checks to see if they are
 #' accomponied by .LAX index files. Indexing greatly increases the processing
 #' speed for many tasks. 
-#' @param las_dir path to a directory containing .LAS or .LAZ files to index
+#' @param dir path to a directory containing .LAS or .LAZ files to index
+#' @param write_lax indicates if .lax file should be written (`TRUE`), or only 
+#' checked for (`FALSE`)
 #' @examples 
-#' index_las('E:/my/las/dir/')
+#' check_for_lax('E:/my/las/dir/')
 #' @export
-index_las = function(las_dir, n_cores) {
-  # Generate list of las that need indexing
-  las_list = list.files(las_dir, '.las|.laz', full.names = TRUE)
-  lax_list = list.files(las_dir, '.lax')
-  needs_lax = las_list[!gsub('.las|.laz', '', basename(las_list)) %in% gsub('.lax', '', lax_list)]
-  cat(length(las_list)-length(needs_lax), 'indexes found. Generating', length(needs_lax), 'indexes\n')
-  #--> Loop in parallel
-  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
-  `%dopar%` = foreach::`%dopar%`
-  foreach::foreach(fn = needs_lax) %dopar% {
-    lidR::writeLAS(lidR::readTLSLAS(fn), fn, index=TRUE)
+# Check for LAX index files and create them as necessary. An earlier version
+# of this function overwrote the original LAS resulting in possible corruption
+# of the original file if the process was interrupted. This updated version uses
+# temporary files to avoid this problem.
+check_for_lax = function(dir, write_lax=TRUE) {
+  #check inputs for validity
+  if(!write_lax %in% c(TRUE, FALSE)) stop('write_lax must be TRUE/FALSE')
+  laz = list.files(dir, pattern='.las|laz', full.names = TRUE)
+  if(length(laz) < 0) stop('no .LAS or .LAZ found in `dir`')
+  
+  #check which files are missing indexes
+  lax = list.files(dir, pattern='.lax', full.names = TRUE)
+  needs_lax = !gsub('.las|.laz', '', laz) %in% gsub('.lax', '', lax)
+  cat(sum(needs_lax), 'files need indexing\n')
+  
+  #return list of needed indexes if write_lax == false
+  if(!write_lax) return(laz[needs_lax])
+  
+  # if write_lax == TRUE, add index
+  for(i in laz[needs_lax]) {
+    ext = tools::file_ext(i)
+    fn = tempfile(fileext=paste0('.',ext))
+    cat('file', i, '\n...reading\n')
+    x = lidR::readLAS(i)
+    cat('...indexing\n')
+    lidR::writeLAS(x, fn, index=TRUE)
+    fn_index = gsub(ext, 'lax', fn)
+    orig_index = gsub('.laz|.las', '.lax', i)
+    if(file.exists(fn)) {
+      cat('...saving\n')
+      #copy temp files and cleanup
+      file.copy(fn_index, orig_index)
+      unlink(fn_index)
+      unlink(fn)
+    }  else {
+      warning('indexing file ', i, ' was unsuccessful')
+    }
   }
-  cat('indexing complete')
-  return(NULL)
 }
 
 #' Find scan locations from a `LAScatalog`
@@ -66,7 +92,7 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
   centroids = list()
   doParallel::registerDoParallel(parallel::makeCluster(n_cores))
   `%dopar%` = foreach::`%dopar%`
-  centroids = foreach(fn = ctg$filename) %dopar% {
+  centroids = foreach::foreach(fn = ctg$filename) %dopar% {
     return(suppressWarnings(find_las_centroid(fn, subsample=subsample)))
   }
   centroids = do.call(rbind, centroids)
@@ -97,9 +123,6 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
 #' stitch_TLS_dir_to_LAS(ctg, 'output_path.las', roi)
 #' @export
 stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distance=60, index=TRUE, scan_locations=NULL) {
-  #require(lidR)  
-  #require(sf)
-  
   # Load plot boundaries/buffer and create filter
   hdr = lidR::readLASheader(ctg$filename[1])
   proj = sf::st_crs(hdr@VLR$`WKT OGC CS`$`WKT OGC COORDINATE SYSTEM`)
@@ -266,7 +289,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   
   doParallel::registerDoParallel(parallel::makeCluster(n_cores))
   `%dopar%` = foreach::`%dopar%`
-  out = foreach(t=todo_list, .errorhandling = 'pass', .packages=c('sf', 'lidR')) %dopar% {
+  out = foreach::foreach(t=todo_list, .errorhandling = 'pass', .packages=c('sf', 'lidR')) %dopar% {
     # Load and display tile
     cat('\nloading tile', t, 'of', nrow(grid), '\n')
     tile = grid[t,]
@@ -309,3 +332,39 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   return(out)
 }
 
+
+#' Clip a LAS catalog to a boundary to speed up processing
+#' 
+#' This function takes an input directory of TLS scans that are potentially
+#' overlapping and a region of interest (`bnd`). The function loads and clips  
+#' all las data to `bnd` and outputs LAS tiles with an extent
+#' matching `bnd`.
+#' @param dir a directory of LAS/LAZ files
+#' @param output_dir directory to output LAS tiles
+#' @param bnd an `sf` object denoting the region of interest. Only UTM units tested
+#' @export
+clip_las_catalog = function(dir, bnd, output_dir) {
+  #check inputs
+  needs_index = length(landecoutils::check_for_lax(dir, rewrite=FALSE)) > 0
+  if(needs_index) stop('LAS catalog needs indexing. See function `check_for_lax`')
+  if(!'sf' %in% class(bnd)) stop('`bnd` must be an `sf` object')
+  laz = list.files(dir, pattern='.las|laz', full.names = TRUE)
+  if(length(laz) < 0) stop('no .LAS or .LAZ found in `dir`')
+  ctg = lidR::readLAScatalog(dir)
+  if(!lidR::st_crs(bnd) == lidR::st_crs(ctg)) {
+    warning('crs of `bnd` and `ctg` do not match. Reprojecting')
+    bnd = sf::st_transform(bnd, sf::st_crs(ctg))
+  }
+  # make filter
+  filt = paste('-keep_xy', sf::st_bbox(bnd) %>% paste(collapse=' '))
+  cat('clipping', length(laz),'files\n')
+  #clip laz
+  for(i in laz) {
+    fn = paste0(output_dir, '/', basename(i))
+    if(file.exists(fn)) next
+    cat('file', basename(i),'...\n...reading\n')
+    x = lidR::readLAS(i, filter = filt)
+    cat('...writing\n')
+    lidR::writeLAS(x, fn, index=TRUE)
+  }
+}
