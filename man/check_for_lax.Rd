@@ -13,9 +13,11 @@ check_for_lax(dir, write_lax = TRUE)
 checked for (\code{FALSE})}
 }
 \description{
-This function takes a directory of LAS files and checks to see if they are
-accomponied by .LAX index files. Indexing greatly increases the processing
-speed for many tasks.
+Check for LAX index files and create them as necessary.  Indexing greatly
+increases the processingAn earlier version of this function overwrote the
+original LAS resulting in possible corruption of the original file if the
+process was interrupted. This updated version uses temporary files to avoid
+this problem.
 }
 \examples{
 check_for_lax('E:/my/las/dir/')

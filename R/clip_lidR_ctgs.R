@@ -330,7 +330,6 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   return(out)
 }
 
-
 #' Clip a LAS catalog to a boundary to speed up processing
 #' 
 #' This function takes an input directory of TLS scans that are potentially
