@@ -343,7 +343,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
 #' @export
 clip_las_catalog = function(dir, bnd, output_dir) {
   #check inputs
-  needs_index = length(landecoutils::check_for_lax(dir, rewrite=FALSE)) > 0
+  needs_index = length(landecoutils::check_for_lax(dir, write_lax = FALSE)) > 0
   if(needs_index) stop('LAS catalog needs indexing. See function `check_for_lax`')
   if(!'sf' %in% class(bnd)) stop('`bnd` must be an `sf` object')
   laz = list.files(dir, pattern='.las|laz', full.names = TRUE)
