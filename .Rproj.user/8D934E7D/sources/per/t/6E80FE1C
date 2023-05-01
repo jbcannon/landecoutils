@@ -1,0 +1,26 @@
+{
+    "id": "6E80FE1C",
+    "path": "~/GitHub/landecoutils/R/scan_pts.R",
+    "project_path": "R/scan_pts.R",
+    "type": "r_source",
+    "hash": "3156225532",
+    "contents": "",
+    "dirty": false,
+    "created": 1682953764488.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "11,19",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1682953983,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1682953983016,
+    "read_only": false,
+    "read_only_alternatives": []
+}
