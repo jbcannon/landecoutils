@@ -49,7 +49,7 @@ make_scan_points = function(input_shp, output_shp, dist, dirs=c(0,90,180,270)) {
     }
     pt_out = do.call(rbind, pt_out) #combine outputs
     #attach old column info to new pts
-    colnames = colnames(st_drop_geometry(shp))
+    colnames = colnames(sf::st_drop_geometry(shp))
     for(c in colnames) {
       pt_out[,c] = NA
       pt_out[,c] = sf::st_drop_geometry(shp[i,c])
