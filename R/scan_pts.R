@@ -43,7 +43,7 @@ make_scan_points = function(input_shp, output_shp, dist, dirs=c(0,90,180,270)) {
   for(i in 1:nrow(coords)) { # loop through all input coords, i
     pt_out = list()
     # apply function for each direction
-    for(d in dir) {  # loop through all directions, d
+    for(d in dirs) {  # loop through all directions, d
       new_pt = my_function(coords[i,'X'], coords[i,'Y'], d, dist)
       pt_out[[length(pt_out)+1]] = new_pt
     }
