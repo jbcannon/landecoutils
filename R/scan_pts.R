@@ -68,4 +68,45 @@ make_scan_points = function(input_shp, output_shp, dist, dirs=c(0,90,180,270)) {
   return(all_out)
 }
 
-
+#' Covert .kml or .shp to gps coordinates
+#'
+#' This function takes a kml or other shapefile, transforms them to
+#' WGS84, and export GPS coordinates
+#' @param in_file path to a .KML or .SHP containing points
+#' @param csv_out path to a .CSV or .TXT to output points. If not provided, an
+#' interactive file chooser will be used
+#' @param proj epsg projection for output. Defaults to 32316 (UTM 16N)
+#' @examples
+#' in_file = 'R:/landscape_ecology/test.shp'
+#' out_file = 'R:/landscape_ecology/output.csv'
+#' spatial_to_coords(in_file, out_file)
+#'
+#' # Use an interactive file chooser
+#' in_file = file.choose()
+#' out_file = file.choose()
+#' spatial_to_coords(in_file, out_file)
+#'
+#' @export
+spatial_to_coords = function(in_file, csv_out = NULL, proj=32616) {
+  # load and transform kml
+  if(!file.exists(in_file)) stop('input file does not exist')
+  if(!is.null(csv_out)) {
+    if(file.exists(csv_out)) stop('output file already exists')
+    if(tools::file_ext(csv_out) %in% c('txt', 'csv')) stop('output file must be *.txt or *.csv')
+  }
+  kml = sf::read_sf(kml_file)
+  kml = sf::st_transform(kml, sf::st_crs(proj))
+  coords = sf::st_coordinates(kml)[,c('X', 'Y')]
+  coords = as.data.frame(coords)
+  coords$proj =   suppressWarnings(sf::st_crs(proj)$input)
+  colnames(coords) = c('X', 'Y', 'proj')
+  kml = sf::st_drop_geometry(kml)
+  kml = cbind(kml, coords)
+  knitr::kable(kml)
+  if(!is.null(csv_out)) {
+    readr::write_csv(kml, file.choose(new=TRUE))
+  } else {
+    readr::write_csv(kml, csv_out)
+  }
+  return(kml)
+}
