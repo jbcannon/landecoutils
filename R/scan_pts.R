@@ -94,7 +94,7 @@ spatial_to_coords = function(in_file, csv_out = NULL, proj=32616) {
     if(file.exists(csv_out)) stop('output file already exists')
     if(tools::file_ext(csv_out) %in% c('txt', 'csv')) stop('output file must be *.txt or *.csv')
   }
-  kml = sf::read_sf(kml_file)
+  kml = sf::read_sf(in_file)
   kml = sf::st_transform(kml, sf::st_crs(proj))
   coords = sf::st_coordinates(kml)[,c('X', 'Y')]
   coords = as.data.frame(coords)
