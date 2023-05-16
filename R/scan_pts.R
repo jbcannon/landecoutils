@@ -103,7 +103,7 @@ spatial_to_coords = function(in_file, csv_out = NULL, proj=32616) {
   kml = sf::st_drop_geometry(kml)
   kml = cbind(kml, coords)
   knitr::kable(kml)
-  if(!is.null(csv_out)) {
+  if(is.null(csv_out)) {
     readr::write_csv(kml, file.choose(new=TRUE))
   } else {
     readr::write_csv(kml, csv_out)
