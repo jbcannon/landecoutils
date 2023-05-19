@@ -216,6 +216,8 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   bnd_buff = sf::st_buffer(bnd, dist=buffer)
   ex = sf::st_bbox(bnd_buff)
   filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
+  tmp = ex/tile_size
+  ex = c(floor(tmp[1]), floor(tmp[2]), ceiling(tmp[3]), ceiling(tmp[4]))*tile_size
   lidR::opt_filter(ctg) = filt
 
   #create fishnet from extent
