@@ -1,9 +1,9 @@
 #' Compress a folder of LAS files to LAZ format.
-#' 
+#'
 #' This function takes a directory of LAS files and compresses them to LAZ.
-#' The original LAS files are deleted assuming you want to save space. 
+#' The original LAS files are deleted assuming you want to save space.
 #' @param las_dir path to a directory containing .LAS files to compress
-#' @examples 
+#' @examples
 #' compress_las('E:/my/las/dir/')
 #' @export
 compress_las = function(las_dir, n_cores, index=TRUE) {
@@ -19,16 +19,16 @@ compress_las = function(las_dir, n_cores, index=TRUE) {
 }
 
 #' Check for and create a lax index from a directory of LAS files
-#' 
+#'
 #' Check for LAX index files and create them as necessary.  Indexing greatly
 #' increases the processingAn earlier version of this function overwrote the
 #' original LAS resulting in possible corruption of the original file if the
 #' process was interrupted. This updated version uses temporary files to avoid
 #' this problem.
 #' @param dir path to a directory containing .LAS or .LAZ files to index
-#' @param write_lax indicates if .lax file should be written (`TRUE`), or only 
+#' @param write_lax indicates if .lax file should be written (`TRUE`), or only
 #' checked for (`FALSE`)
-#' @examples 
+#' @examples
 #' check_for_lax('E:/my/las/dir/')
 #' @export
 check_for_lax = function(dir, write_lax=TRUE) {
@@ -36,15 +36,15 @@ check_for_lax = function(dir, write_lax=TRUE) {
   if(!write_lax %in% c(TRUE, FALSE)) stop('write_lax must be TRUE/FALSE')
   laz = list.files(dir, pattern='.las|laz', full.names = TRUE)
   if(length(laz) < 0) stop('no .LAS or .LAZ found in `dir`')
-  
+
   #check which files are missing indexes
   lax = list.files(dir, pattern='.lax', full.names = TRUE)
   needs_lax = !gsub('.las|.laz', '', laz) %in% gsub('.lax', '', lax)
   cat(sum(needs_lax), 'files need indexing\n')
-  
+
   #return list of needed indexes if write_lax == false
   if(!write_lax) return(laz[needs_lax])
-  
+
   # if write_lax == TRUE, add index
   for(i in laz[needs_lax]) {
     ext = tools::file_ext(i)
@@ -54,7 +54,7 @@ check_for_lax = function(dir, write_lax=TRUE) {
     cat('...indexing\n')
     lidR::writeLAS(x, fn, index=TRUE)
     fn_index = gsub(ext, 'lax', fn)
-    orig_index = gsub('.laz|.las', '.lax', i)
+    orig_index = gsub('.laz$|.las$', '.lax', i)
     if(file.exists(fn)) {
       cat('...saving\n')
       #copy temp files and cleanup
@@ -68,16 +68,16 @@ check_for_lax = function(dir, write_lax=TRUE) {
 }
 
 #' Find scan locations from a `LAScatalog`
-#' 
+#'
 #' This function does the same as `las_find_centroids` but it works on a
-#' `LAScatalog` and returns an `sf` object of point lcoations of scan centroids. 
+#' `LAScatalog` and returns an `sf` object of point lcoations of scan centroids.
 #' Result of this function can be used as an input to `stitch_TLS_dir_to_LAS` and
 #' `stitch_TLS_dir_to_LAS_tile` to increase speed.
-#' 
+#'
 #' @param ctg a `lidR::LAScatalog` object for which you want to find a centroids of all scan locations
 #' @param n_cores a number of cores to use for parallel processing.
 #' @param subsample drop every `nth` return to speed up processing time. See `las_find_centroids`
-#' @examples 
+#' @examples
 #' library(sf)
 #' ctg = readTLScatalog('path/to/las/catalog')
 #' scan_locations = find_ctg_centroids(ctg, n_cores=4)
@@ -98,13 +98,13 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
 }
 
 #' Stitch TLS scans into single *.las
-#' 
+#'
 #' This function takes an input directory of TLS scans that are overlapping
-#' and a region of interest. The function loads, stitches, and clips  
-#' all las data to the region of interest and outputs into a single file. 
+#' and a region of interest. The function loads, stitches, and clips
+#' all las data to the region of interest and outputs into a single file.
 #' Note that this should only be used on relatively small areas to avoid
 #' very large file sizes and memory errors. Plot sizes < 0.2 ha are recommended
-#' including buffer unless points are sparse. *Note*: script will 
+#' including buffer unless points are sparse. *Note*: script will
 #' keep only data columns which are common among all scans.
 #' @param ctg a `LAScatalog` object containing LAS files to be stitched
 #' @param out_las path for output *.las file
@@ -114,7 +114,7 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
 #' @param index boolean. Also write a lax file to index the points in the files. see `lidR::writeLAS`
 #' @param scan_locations (optional) an `sf` object of scan centroids index the same as `ctg`.
 #' If `scan_locations` is `NULL` then scan locations will be found automatically
-#' @examples 
+#' @examples
 #' # Load LAScatalog and clip to a region of interest specified by an sf object
 #' ctg = readLAScatalog('path/to/LASfiles/')
 #' roi = sf::st_read('plot_boundary.shp')
@@ -129,13 +129,13 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   ex = sf::st_bbox(roi_buff)
   filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
   lidR::opt_filter(ctg) = filt
-  
+
   #Display catalog and ROI
   lidR::plot(ctg)
   plot(roi$geometry, add=TRUE, lwd=2, col='white', border='white')
   plot(roi_buff$geometry, add=TRUE, lty=2, border='white')
   Sys.sleep(0.5)
-  
+
   # Load TLS scans from directory and clip to roi.. rbind, and write to file.
   i = 1
   combined_las = list()
@@ -150,7 +150,7 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   }
   #Get rid of any empty items in the list.
   combined_las = combined_las[unlist(lapply(combined_las, function(x) class(x)!='NULL'))]
-  
+
   #To avoid rbind errors, Find common columns among scans and keep only those
   common_cols = lapply(combined_las, function(x) colnames(x@data))
   common_cols = Reduce(intersect, common_cols)
@@ -165,16 +165,16 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
 }
 
 #' Find centroid of large *.las
-#' 
+#'
 #' This function takes a `lidR::LAS` object, and reads it in quickly by dropping
 #' most points using `subsample`. The function returns an `sf::POINT` object
 #' containing the coordinates of the centroid. *Note* that centroid is only
 #' approximate and may be imprecise if subsample is large (i.e., > 1000) or
 #' LAS point density is low.
-#' 
+#'
 #' @param las a `lidR::LAS` object for which you want to find a centroid
 #' @param subsample drop every `nth` return to speed up processing time
-#' @examples 
+#' @examples
 #' # Load large LAS file and identify the centroid (i.e., scan location)
 #' library(lidR)
 #' library(sf)
@@ -198,11 +198,11 @@ find_las_centroid = function(las, subsample=1e5) {
 }
 
 #' Combine overlapping TLS scans into tiled LAS scene
-#' 
+#'
 #' This function takes an input directory of TLS scans that are overlapping
-#' and a region of interest (e.g., large plot). The function loads, stitches, and clips  
+#' and a region of interest (e.g., large plot). The function loads, stitches, and clips
 #' all las data to the region of interest and outputs LAS tiles of a user specified
-#' size. *Note*: when binding overlapping scan sections, script will 
+#' size. *Note*: when binding overlapping scan sections, script will
 #' keep only data columns which are common among all scans.
 #' @param ctg a `LAScatalog` object containing overlapping TLS scans
 #' @param out_dir directory to output LAS tiles (no ending '/' in path).
@@ -212,16 +212,16 @@ find_las_centroid = function(las, subsample=1e5) {
 #' @param n_cores number of cores to use in parallel processing
 #' @param max_scan_distance maximum distance from scan to be included. Evaluated using `find_las_centroid()`
 #' @param index boolean. Also write a lax file to index the points in the files. see `lidR::writeLAS`
-#' @examples 
+#' @examples
 #' # Load LAScatalog, clip, and tile for a large area specified by an sf object
 #' ctg = readLAScatalog('path/to/LASfiles/')
 #' bnd = sf::st_read('plot_boundary.shp')
 #' stitch_TLS_dir_to_LAS_tiles(ctg, 'output_tiles', bnd, tile_size = 30)
 #' @export
 stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, buffer = 10, max_scan_distance=60, index=TRUE, scan_locations=NULL) {
-  #require(lidR)  
+  #require(lidR)
   #require(sf)
-  
+
   # Load plot boundaries/buffer and create filter
   hdr = lidR::readLASheader(ctg$filename[1])
   proj = sf::st_crs(hdr@VLR$`WKT OGC CS`$`WKT OGC COORDINATE SYSTEM`)
@@ -230,7 +230,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   ex = sf::st_bbox(bnd_buff)
   filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
   lidR::opt_filter(ctg) = filt
-  
+
   #create fishnet from extent
   ex = round(terra::ext(bnd_buff), 1)
   ncol = ceiling(diff(ex[1:2]) / tile_size)
@@ -243,13 +243,13 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   sf::st_crs(grid) = proj
   ex = sf::st_as_sf(terra::as.polygons(round(terra::ext(bnd_buff), 1)))
   grid = grid[sf::st_intersects(grid, bnd_buff, sparse=FALSE),]
-  
+
   #Display catalog and grid
   #lidR::plot(ctg) #these calls to plot were crashing things in one instance. Need to look into that.
   #plot(bnd$geometry, add=TRUE, lwd=2, border='white')
   #plot(grid$geometry, add=TRUE, border='white')
   #Sys.sleep(0.5)
-  
+
   #Check to see what all is already complete
   todo_list = c()
   for(t in 1:nrow(grid)){
@@ -259,7 +259,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     out_las = gsub('\\/\\/', '\\/', out_las)
     if(!file.exists(out_las))  todo_list = c(todo_list, t)
   }
-  
+
   #Get all scan centroids once
   if(is.null(scan_locations)) {
     cat('finding all scan footprints within', max_scan_distance, 'meters\n')
@@ -274,7 +274,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
       i=i+1
     }; scan_locations = do.call(rbind , scan_locations)
   }
-  
+
   scan_locations = sf::st_buffer(scan_locations, dist=max_scan_distance)
   #plot(grid$geom)
   #plot(bnd$geom, lwd=2, border='black', add=TRUE)
@@ -282,9 +282,9 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   #plot(grid$geom)
   #plot(bnd$geom, lwd = 2, border = "black", add = TRUE)
   Sys.sleep(0.5)
-  
+
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
-  
+
   doParallel::registerDoParallel(parallel::makeCluster(n_cores))
   `%dopar%` = foreach::`%dopar%`
   out = foreach::foreach(t=todo_list, .errorhandling = 'pass', .packages=c('sf', 'lidR')) %dopar% {
@@ -302,16 +302,16 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     #plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
     #plot(grid[1:t,]$geom, add=TRUE, col='grey')
     #plot(tile,add=TRUE, col='yellow')
-    
-    #loop through relevant scans, clip and 
+
+    #loop through relevant scans, clip and
     combined_las = list()
     filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
     for(i in 1:nrow(scans_to_load)) {
-      cat('.....appending scan', i, 'of', nrow(scans_to_load), '\n')  
+      cat('.....appending scan', i, 'of', nrow(scans_to_load), '\n')
       roi = sf::st_intersection(tile, scans_to_load[i,])
       combined_las[[i]] = lidR::clip_roi(lidR::readLAS(scans_to_load[i,]$fn, filter=filt), roi)
     }
-    
+
     #To avoid rbind errors, Find common columns among scans and keep only those
     combined_las = combined_las[!sapply(combined_las, is.null)]
     common_cols = lapply(combined_las, function(x) colnames(x@data))
@@ -331,9 +331,9 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
 }
 
 #' Clip a LAS catalog to a boundary to speed up processing
-#' 
+#'
 #' This function takes an input directory of TLS scans that are potentially
-#' overlapping and a region of interest (`bnd`). The function loads and clips  
+#' overlapping and a region of interest (`bnd`). The function loads and clips
 #' all las data to `bnd` and outputs LAS tiles with an extent
 #' matching `bnd`.
 #' @param dir a directory of LAS/LAZ files
