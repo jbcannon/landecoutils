@@ -47,24 +47,9 @@ check_for_lax = function(dir, write_lax=TRUE) {
 
   # if write_lax == TRUE, add index
   for(i in laz[needs_lax]) {
-    ext = tools::file_ext(i)
-    fn = tempfile(fileext=paste0('.',ext))
-    cat('file', i, '\n...reading\n')
-    x = lidR::readLAS(i)
-    cat('...indexing\n')
-    lidR::writeLAS(x, fn, index=TRUE)
-    fn_index = gsub(ext, 'lax', fn)
-    orig_index = gsub('.laz$|.las$', '.lax', i)
-    if(file.exists(fn)) {
-      cat('...saving\n')
-      #copy temp files and cleanup
-      file.copy(fn_index, orig_index)
-      unlink(fn_index)
-      unlink(fn)
-    }  else {
-      warning('indexing file ', i, ' was unsuccessful')
+    cat('file', i, '\n...indexing\n')
+    rlas::writelax(i)
     }
-  }
 }
 
 #' Find scan locations from a `LAScatalog`
