@@ -221,23 +221,16 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   lidR::opt_filter(ctg) = filt
 
   #create fishnet from extent
-  ex = round(terra::ext(bnd_buff), 1)
-  ncol = ceiling(diff(ex[1:2]) / tile_size)
-  nrow = ceiling(diff(ex[3:4]) / tile_size)
-  ex[2] = ex[1]  + ncol * tile_size
-  ex[4] = ex[3]  + nrow * tile_size
-  grid = terra::rast(extent=ex, ncols=ncol, nrows=nrow)
+  ncol = (ex[3] - ex[1])/tile_size
+  nrow = (ex[4] - ex[2]) / tile_size
+
+  grid = terra::rast(extent=ext(ex[c(1,3,2,4)]), ncols=ncol, nrows=nrow)
   grid = terra::as.polygons(grid)
   grid = sf::st_as_sf(grid)
   sf::st_crs(grid) = proj
-  ex = sf::st_as_sf(terra::as.polygons(round(terra::ext(bnd_buff), 1)))
-  grid = grid[sf::st_intersects(grid, bnd_buff, sparse=FALSE),]
 
-  #Display catalog and grid
-  #lidR::plot(ctg) #these calls to plot were crashing things in one instance. Need to look into that.
-  #plot(bnd$geometry, add=TRUE, lwd=2, border='white')
-  #plot(grid$geometry, add=TRUE, border='white')
-  #Sys.sleep(0.5)
+  #ex = sf::st_as_sf(terra::as.polygons(round(terra::ext(bnd_buff), 1)))
+  grid = grid[sf::st_intersects(grid, bnd_buff, sparse=FALSE),]
 
   #Check to see what all is already complete
   todo_list = c()
@@ -265,11 +258,9 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   }
 
   scan_locations = sf::st_buffer(scan_locations, dist=max_scan_distance)
-  #plot(grid$geom)
-  #plot(bnd$geom, lwd=2, border='black', add=TRUE)
-  #plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
-  #plot(grid$geom)
-  #plot(bnd$geom, lwd = 2, border = "black", add = TRUE)
+  plot(scan_locations$geometry, col=rgb(0,0,1,0.05))
+  plot(grid$geometry, add= TRUE, border='red')
+  plot(bnd$geometry, lwd = 2, border = "black", add = TRUE)
   Sys.sleep(0.5)
 
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
@@ -284,13 +275,9 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.laz')
     out_las = gsub('\\/\\/', '\\/', out_las)
     if(file.exists(out_las)) return(NULL)
-    scans_to_load = scan_locations[sf::st_intersects(tile, scan_locations, sparse = FALSE),]
+    scans_to_load = which(sf::st_intersects(tile, scan_locations, sparse = FALSE))
+    scans_to_load = dplyr::slice(scan_locations, scans_to_load)
     if(nrow(scans_to_load)<1) return(NULL)
-    #plot(grid$geom)
-    #plot(bnd$geom, add=TRUE, lwd=2)
-    #plot(scan_locations$geom, add=TRUE, col=rgb(0,0,1,0.2))
-    #plot(grid[1:t,]$geom, add=TRUE, col='grey')
-    #plot(tile,add=TRUE, col='yellow')
 
     #loop through relevant scans, clip and
     combined_las = list()
@@ -313,7 +300,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
 
     #write tile to disk
     cat('.....scans stitched. writing tile to disk')
-    lidR::writeLAS(lidR::las_update(combined_las), out_las, index=index)
+    lidR::writeLAS(lidR::las_update(combined_las), out_las, index=TRUE)
     return(NULL)
   }
   return(out)
