@@ -39,7 +39,7 @@ check_for_lax = function(dir, write_lax=TRUE) {
 
   #check which files are missing indexes
   lax = list.files(dir, pattern='.lax', full.names = TRUE)
-  needs_lax = !gsub('.las|.laz', '', laz) %in% gsub('.lax', '', lax)
+  needs_lax = !gsub('.las$|.laz$', '', laz) %in% gsub('.lax', '', lax)
   cat(sum(needs_lax), 'files need indexing\n')
 
   #return list of needed indexes if write_lax == false
