@@ -269,7 +269,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
   cl = parallel::makeCluster(n_cores)
   doSNOW::registerDoSNOW(cl)
-  pb = txtProgressBar(max = nrow(input_stemmap), style = 3)
+  pb = txtProgressBar(max = length(todo_list), style = 3)
   progress = function(n) setTxtProgressBar(pb, n)
   opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
