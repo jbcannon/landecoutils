@@ -267,9 +267,12 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
 
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
   cl = parallel::makeCluster(n_cores)
-  doParallel::registerDoParallel(cl)
+  doSNOW::registerDoSNOW(cl)
+  pb = txtProgressBar(max = nrow(input_stemmap), style = 3)
+  progress = function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
-  out = foreach::foreach(t=todo_list, .errorhandling = 'pass', .packages=c('sf', 'lidR')) %dopar% {
+  out = foreach::foreach(t=todo_list, .errorhandling = 'pass', .packages=c('sf', 'lidR'), .options.snow=opts) %dopar% {
     # Load and display tile
     cat('\nloading tile', t, 'of', nrow(grid), '\n')
     tile = grid[t,]
@@ -305,6 +308,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     lidR::writeLAS(lidR::las_update(combined_las), out_las, index=TRUE)
     return(NULL)
   }
+  close(pb)
   parallel::stopCluster(cl)
   return(out)
 }
