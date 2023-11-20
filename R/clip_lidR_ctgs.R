@@ -85,6 +85,13 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
   return(centroids)
 }
 
+#helper function to grab crs from LASCatalog
+get_ctg_crs = function(ctg){
+    hdr = lidR::readLASheader(ctg$filename[1])
+    proj = sf::st_crs(hdr@VLR$`WKT OGC CS`$`WKT OGC COORDINATE SYSTEM`)
+    return(proj)
+}
+
 #' Stitch TLS scans into single *.las
 #'
 #' This function takes an input directory of TLS scans that are overlapping
@@ -149,6 +156,7 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
     return(x)})
   combined_las = do.call(rbind,combined_las)
   combined_las@header@VLR = list()
+  st_crs(combined_las) = proj
   lidR::writeLAS(lidR::las_update(combined_las), out_las, index=index)
   cat('combined las written to', out_las, '\n')
   return(NULL)
