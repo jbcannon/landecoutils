@@ -311,7 +311,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
       return(x)})
     combined_las = do.call(rbind,combined_las)
     combined_las@header@VLR = list()
-
+    st_crs(combined_las) = proj
     #write tile to disk
     cat('.....scans stitched. writing tile to disk')
     lidR::writeLAS(lidR::las_update(combined_las), out_las, index=TRUE)
