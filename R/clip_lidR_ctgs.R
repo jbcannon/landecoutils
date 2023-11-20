@@ -13,6 +13,7 @@ compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
   `%dopar%` = foreach::`%dopar%`
   foreach::foreach(fn=files) %dopar% {
     new_laz_fn = gsub('.las', '.laz', fn)
+    if(file.exists(new_laz_fn)) {return(NULL)}
     lidR::writeLAS(lidR::readLAS(fn), new_laz_fn, index=index)
     if(delete_old) {if(file.exists(new_laz_fn)) unlink(fn)}
     return(NULL)
