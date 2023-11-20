@@ -6,7 +6,7 @@
 #' @examples
 #' compress_las('E:/my/las/dir/')
 #' @export
-compress_las = function(las_dir, n_cores, index=TRUE) {
+compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
   cl = parallel::makeCluster(n_cores)
   doParallel::registerDoParallel(cl)
   files = list.files(las_dir, '.las', full.names=TRUE)
@@ -14,7 +14,7 @@ compress_las = function(las_dir, n_cores, index=TRUE) {
   foreach::foreach(fn=files) %dopar% {
     new_laz_fn = gsub('.las', '.laz', fn)
     lidR::writeLAS(lidR::readLAS(fn), new_laz_fn, index=index)
-    if(file.exists(new_laz_fn)) unlink(fn)
+    if(delete_old) {if(file.exists(new_laz_fn)) unlink(fn)}
     return(NULL)
   }
   parallel::stopCluster(cl)
