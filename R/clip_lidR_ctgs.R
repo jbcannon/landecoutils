@@ -7,17 +7,21 @@
 #' compress_las('E:/my/las/dir/')
 #' @export
 compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
-  cl = parallel::makeCluster(n_cores)
-  doParallel::registerDoParallel(cl)
   files = list.files(las_dir, '.las', full.names=TRUE)
+  cl = parallel::makeCluster(n_cores)
+  doSNOW::registerDoSNOW(cl)
+  pb = txtProgressBar(max = length(files), style = 3)
+  progress = function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
-  foreach::foreach(fn=files) %dopar% {
+  foreach::foreach(fn=files, .options.snow=opts) %dopar% {
     new_laz_fn = gsub('.las', '.laz', fn)
     if(file.exists(new_laz_fn)) {return(NULL)}
     lidR::writeLAS(lidR::readLAS(fn), new_laz_fn, index=index)
     if(delete_old) {if(file.exists(new_laz_fn)) unlink(fn)}
     return(NULL)
   }
+  close(pb)
   parallel::stopCluster(cl)
 }
 
@@ -76,11 +80,17 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
   s = as.character(format(subsample, scientific=FALSE))
   filt = paste0('-keep_every_nth ', s)
   centroids = list()
-  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
+  cl = parallel::makeCluster(n_cores)
+  doSNOW::registerDoSNOW(cl)
+  pb = txtProgressBar(max = length(ctg$filename), style = 3)
+  progress = function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
-  centroids = foreach::foreach(fn = ctg$filename) %dopar% {
+  centroids = foreach::foreach(fn = ctg$filename, .options.snow=opts) %dopar% {
     return(suppressWarnings(find_las_centroid(fn, subsample=subsample)))
   }
+  close(pb)
+  parallel::stopCluster(cl)
   centroids = do.call(rbind, centroids)
   return(centroids)
 }
