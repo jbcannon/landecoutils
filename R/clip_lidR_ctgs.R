@@ -7,7 +7,8 @@
 #' compress_las('E:/my/las/dir/')
 #' @export
 compress_las = function(las_dir, n_cores, index=TRUE) {
-  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
+  cl = parallel::makeCluster(n_cores)
+  doParallel::registerDoParallel(cl)
   files = list.files(las_dir, '.las', full.names=TRUE)
   `%dopar%` = foreach::`%dopar%`
   foreach::foreach(fn=files) %dopar% {
@@ -16,6 +17,7 @@ compress_las = function(las_dir, n_cores, index=TRUE) {
     if(file.exists(new_laz_fn)) unlink(fn)
     return(NULL)
   }
+  parallel::stopCluster(cl)
 }
 
 #' Check for and create a lax index from a directory of LAS files
@@ -264,8 +266,8 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   Sys.sleep(0.5)
 
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
-
-  doParallel::registerDoParallel(parallel::makeCluster(n_cores))
+  cl = parallel::makeCluster(n_cores)
+  doParallel::registerDoParallel(cl)
   `%dopar%` = foreach::`%dopar%`
   out = foreach::foreach(t=todo_list, .errorhandling = 'pass', .packages=c('sf', 'lidR')) %dopar% {
     # Load and display tile
@@ -303,6 +305,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     lidR::writeLAS(lidR::las_update(combined_las), out_las, index=TRUE)
     return(NULL)
   }
+  parallel::stopCluster(cl)
   return(out)
 }
 
