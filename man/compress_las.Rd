@@ -4,7 +4,7 @@
 \alias{compress_las}
 \title{Compress a folder of LAS files to LAZ format.}
 \usage{
-compress_las(las_dir, n_cores, index = TRUE)
+compress_las(las_dir, n_cores, index = TRUE, delete_old = FALSE)
 }
 \arguments{
 \item{las_dir}{path to a directory containing .LAS files to compress}
