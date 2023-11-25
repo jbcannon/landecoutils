@@ -1,3 +1,36 @@
+#' Create elevation products from a LAS tile
+#'
+#' This function takes a LAS object and returns a digital elevation model
+#' (dem), a canopy surface model (csm), and a canopy height model (chm)
+#' using default algorithms in lidR. Can be used with lidR::catalog_map.
+#' Returns a 3-layered SpatRast object with names dem, csm, chm.
+#' @param las LAS object from lidR package to create model
+#' @param res output resolution in m
+#' @examples
+#' library(terra)
+#' las = readLAS('E:/mylas.laz')
+#' elev = get_cdem_csm_chm(las)
+#' plot(elev$dem)
+#' plot(elev$csm)
+#' plot(elev$chm)
+#'
+#' ctg = readLASCatalog('E:/my/las/dir/')
+#' elev = catalog_map(ctg, get_dem_csm_chm)
+#' plot(elev$dem)
+#' plot(elev$csm)
+#' plot(elev$chm)
+#'
+#' @export
+get_dem_csm_chm = function(las, res=0.5) {
+  las = lidR::classify_ground(las, lidR::csf(class_threshold = 0.5))
+  dem = lidR::rasterize_terrain(las, res=res)
+  csm = lidR::rasterize_canopy(las, res=res)
+  las = lidR::normalize_height(las, lidR::tin())
+  chm = lidR::rasterize_canopy(las, res = res)
+  out = terra::rast(c(dem=dem,csm=csm,chm=chm))
+  return(out)
+}
+
 #' Compress a folder of LAS files to LAZ format.
 #'
 #' This function takes a directory of LAS files and compresses them to LAZ.
@@ -95,7 +128,17 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
   return(centroids)
 }
 
-#helper function to grab crs from LASCatalog
+#' Get Coordinate Reference System (CRS) from LASCatalog
+#'
+#' This function takes a LASCatalog as input and returns a `crs` object
+#' representing the coordinate reference system of the LASCatalog
+#' @param ctg a `LAScatalog` object containing LAS files
+#' @examples
+#' # Load LAScatalog and capture the crs
+#' ctg = readLAScatalog('path/to/LASfiles/')
+#' myCRS = get_crg_crs(ctg)
+#' print(myCRS)
+#' @export
 get_ctg_crs = function(ctg){
     hdr = lidR::readLASheader(ctg$filename[1])
     proj = sf::st_crs(hdr@VLR$`WKT OGC CS`$`WKT OGC COORDINATE SYSTEM`)
