@@ -36,6 +36,7 @@ get_dem_csm_chm = function(las, res=0.5) {
 #' This function takes a directory of LAS files and compresses them to LAZ.
 #' The original LAS files are deleted assuming you want to save space.
 #' @param las_dir path to a directory containing .LAS files to compress
+#' @param n_cores number of cores to create doSNOW cluster
 #' @examples
 #' compress_las('E:/my/las/dir/')
 #' @export
@@ -67,11 +68,12 @@ compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
 #' this problem.
 #' @param dir path to a directory containing .LAS or .LAZ files to index
 #' @param write_lax indicates if .lax file should be written (`TRUE`), or only
+#' @param n_cores number of cores to create doSNOW cluster
 #' checked for (`FALSE`)
 #' @examples
 #' check_for_lax('E:/my/las/dir/')
 #' @export
-check_for_lax = function(dir, write_lax=TRUE) {
+check_for_lax = function(dir, n_cores=1, write_lax=TRUE) {
   #check inputs for validity
   if(!write_lax %in% c(TRUE, FALSE)) stop('write_lax must be TRUE/FALSE')
   laz = list.files(dir, pattern='.las|laz', full.names = TRUE)
@@ -86,10 +88,21 @@ check_for_lax = function(dir, write_lax=TRUE) {
   if(!write_lax) return(laz[needs_lax])
 
   # if write_lax == TRUE, add index
-  for(i in laz[needs_lax]) {
+  cl = parallel::makeCluster(n_cores)
+  doSNOW::registerDoSNOW(cl)
+  pb = txtProgressBar(max = length(laz[needs_lax]), style = 3)
+  progress = function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
+  `%dopar%` = foreach::`%dopar%`
+  foreach::foreach(i = laz[needs_lax], .options.snow=opts) %dopar% {
     cat('file', i, '\n...indexing\n')
     rlas::writelax(i)
-    }
+    return(NULL)
+  }
+  close(pb)
+  parallel::stopCluster(cl)
+  cat(length(laz[needs_lax]), ' indexes complete')
+  return(NULL)
 }
 
 #' Find scan locations from a `LAScatalog`
