@@ -67,11 +67,11 @@ compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
 #' process was interrupted. This updated version uses temporary files to avoid
 #' this problem.
 #' @param dir path to a directory containing .LAS or .LAZ files to index
-#' @param write_lax indicates if .lax file should be written (`TRUE`), or only
 #' @param n_cores number of cores to create doSNOW cluster
+#' @param write_lax indicates if .lax file should be written (`TRUE`), or only
 #' checked for (`FALSE`)
 #' @examples
-#' check_for_lax('E:/my/las/dir/')
+#' check_for_lax('E:/my/las/dir/', n_cores=4)
 #' @export
 check_for_lax = function(dir, n_cores=1, write_lax=TRUE) {
   #check inputs for validity

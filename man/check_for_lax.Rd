@@ -9,10 +9,10 @@ check_for_lax(dir, n_cores = 1, write_lax = TRUE)
 \arguments{
 \item{dir}{path to a directory containing .LAS or .LAZ files to index}
 
-\item{n_cores}{number of cores to create doSNOW cluster
-checked for (\code{FALSE})}
+\item{n_cores}{number of cores to create doSNOW cluster}
 
-\item{write_lax}{indicates if .lax file should be written (\code{TRUE}), or only}
+\item{write_lax}{indicates if .lax file should be written (\code{TRUE}), or only
+checked for (\code{FALSE})}
 }
 \description{
 Check for LAX index files and create them as necessary.  Indexing greatly
@@ -22,5 +22,5 @@ process was interrupted. This updated version uses temporary files to avoid
 this problem.
 }
 \examples{
-check_for_lax('E:/my/las/dir/')
+check_for_lax('E:/my/las/dir/', n_cores=4)
 }
