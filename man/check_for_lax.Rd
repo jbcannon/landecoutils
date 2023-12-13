@@ -4,13 +4,15 @@
 \alias{check_for_lax}
 \title{Check for and create a lax index from a directory of LAS files}
 \usage{
-check_for_lax(dir, write_lax = TRUE)
+check_for_lax(dir, n_cores = 1, write_lax = TRUE)
 }
 \arguments{
 \item{dir}{path to a directory containing .LAS or .LAZ files to index}
 
-\item{write_lax}{indicates if .lax file should be written (\code{TRUE}), or only
+\item{n_cores}{number of cores to create doSNOW cluster
 checked for (\code{FALSE})}
+
+\item{write_lax}{indicates if .lax file should be written (\code{TRUE}), or only}
 }
 \description{
 Check for LAX index files and create them as necessary.  Indexing greatly

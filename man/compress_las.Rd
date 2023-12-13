@@ -8,6 +8,8 @@ compress_las(las_dir, n_cores, index = TRUE, delete_old = FALSE)
 }
 \arguments{
 \item{las_dir}{path to a directory containing .LAS files to compress}
+
+\item{n_cores}{number of cores to create doSNOW cluster}
 }
 \description{
 This function takes a directory of LAS files and compresses them to LAZ.

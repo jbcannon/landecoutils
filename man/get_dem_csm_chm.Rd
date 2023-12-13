@@ -8,6 +8,8 @@ get_dem_csm_chm(las, res = 0.5)
 }
 \arguments{
 \item{las}{LAS object from lidR package to create model}
+
+\item{res}{output resolution in m}
 }
 \description{
 This function takes a LAS object and returns a digital elevation model
