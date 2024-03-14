@@ -220,6 +220,10 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   combined_las = lapply(combined_las, function(x) {
     x@data = x@data[, c('X', 'Y', 'Z', 'gpstime', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')]
     return(x)})
+      #make sure las portion with highest NumberofReturns is listed first so bit count is set correctly
+  whichMaxReturns = which.max(sapply(combined_las, function(x) max((x@data$NumberOfReturns))))
+  n = c(whichMaxReturns, (1:length(combined_las))[-whichMaxReturns])
+  combined_las = do.call(rbind,combined_las[[n]])
   combined_las = do.call(rbind,combined_las)
   combined_las@header@VLR = list()
   st_crs(combined_las) = proj
@@ -375,7 +379,10 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     combined_las = lapply(combined_las, function(x) {
       x@data = x@data[, c('X', 'Y', 'Z', 'gpstime', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')]
       return(x)})
-    combined_las = do.call(rbind,combined_las)
+    #make sure las portion with highest NumberofReturns is listed first so bit count is set correctly
+    whichMaxReturns = which.max(sapply(combined_las, function(x) max((x@data$NumberOfReturns))))
+    n = c(whichMaxReturns, (1:length(combined_las))[-whichMaxReturns])
+    combined_las = do.call(rbind,combined_las[[n]])
     combined_las@header@VLR = list()
     st_crs(combined_las) = proj
     #write tile to disk
