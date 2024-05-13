@@ -83,9 +83,10 @@ check_for_lax = function(dir, n_cores=1, write_lax=TRUE) {
   lax = list.files(dir, pattern='.lax', full.names = TRUE)
   needs_lax = !gsub('.las$|.laz$', '', laz) %in% gsub('.lax', '', lax)
   cat(sum(needs_lax), 'files need indexing\n')
+  if(sum(needs_lax)==0) return(NULL) #exit if none needed.
 
   #return list of needed indexes if write_lax == false
-  if(!write_lax) return(laz[needs_lax])
+  if(!write_lax) return(laz[needs_lax]) 
 
   # if write_lax == TRUE, add index
   cl = parallel::makeCluster(n_cores)
