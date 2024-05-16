@@ -324,7 +324,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     if(!file.exists(out_las))  todo_list = c(todo_list, t)
   }
   if(length(todo_list)<1) {
-    message('all scans already tiled')
+    cat('all scans already tiled')
     return(NULL)
   }
 
