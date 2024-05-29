@@ -76,7 +76,7 @@ compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
 check_for_lax = function(dir, n_cores=1, write_lax=TRUE) {
   #check inputs for validity
   if(!write_lax %in% c(TRUE, FALSE)) stop('write_lax must be TRUE/FALSE')
-  laz = list.files(dir, pattern='.las|laz', full.names = TRUE)
+  laz = list.files(dir, pattern='.las$|laz$', full.names = TRUE)
   if(length(laz) < 0) stop('no .LAS or .LAZ found in `dir`')
 
   #check which files are missing indexes
