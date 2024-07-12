@@ -4,9 +4,9 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Jeffery B.", "Cannon", , "jeffery.cannon@jonesctr.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8436-8712"))
-Description: This package is contains functions to assist in common tasks in the Jones Center Landscape Ecology lab. Current functionality includes (1) tiling terrestrial lidar scans. The functions are primarily for personal use and there has been minimal testing. The only guarantee is that you'll likely run into some issues if you use it :)
+Description: This package is contains functions to assist in common tasks in the Jones Center Landscape Ecology lab. Current functionality includes (1) tiling terrestrial lidar scans. The functions are primarily for personal use and there has been minimal testing. The only guarantee is that you'll likely run into some issues if you use it.
 License: `use_mit_license()`
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Imports: sf, terra, lidR, spanner, TreeLS, doSNOW

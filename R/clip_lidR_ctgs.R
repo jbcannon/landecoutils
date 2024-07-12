@@ -38,14 +38,14 @@ get_dem_csm_chm = function(las, res=0.5) {
 #' @param las_dir path to a directory containing .LAS files to compress
 #' @param n_cores number of cores to create doSNOW cluster
 #' @examples
-#' compress_las('E:/my/las/dir/')
+#' compress_las('E:/my/las/dir/', n_cores=2)
 #' @export
 compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
   files = list.files(las_dir, '.las', full.names=TRUE)
   cl = parallel::makeCluster(n_cores)
   doSNOW::registerDoSNOW(cl)
-  pb = txtProgressBar(max = length(files), style = 3)
-  progress = function(n) setTxtProgressBar(pb, n)
+  pb = utils::txtProgressBar(max = length(files), style = 3)
+  progress = function(n) utils::setTxtProgressBar(pb, n)
   opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
   foreach::foreach(fn=files, .options.snow=opts) %dopar% {
@@ -86,13 +86,13 @@ check_for_lax = function(dir, n_cores=1, write_lax=TRUE) {
   if(sum(needs_lax)==0) return(NULL) #exit if none needed.
 
   #return list of needed indexes if write_lax == false
-  if(!write_lax) return(laz[needs_lax]) 
+  if(!write_lax) return(laz[needs_lax])
 
   # if write_lax == TRUE, add index
   cl = parallel::makeCluster(n_cores)
   doSNOW::registerDoSNOW(cl)
-  pb = txtProgressBar(max = length(laz[needs_lax]), style = 3)
-  progress = function(n) setTxtProgressBar(pb, n)
+  pb = utils::txtProgressBar(max = length(laz[needs_lax]), style = 3)
+  progress = function(n) utils::setTxtProgressBar(pb, n)
   opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
   foreach::foreach(i = laz[needs_lax], .options.snow=opts) %dopar% {
@@ -129,8 +129,8 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
   centroids = list()
   cl = parallel::makeCluster(n_cores)
   doSNOW::registerDoSNOW(cl)
-  pb = txtProgressBar(max = length(ctg$filename), style = 3)
-  progress = function(n) setTxtProgressBar(pb, n)
+  pb = utils::txtProgressBar(max = length(ctg$filename), style = 3)
+  progress = function(n) utils::setTxtProgressBar(pb, n)
   opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
   centroids = foreach::foreach(fn = ctg$filename, .options.snow=opts) %dopar% {
@@ -266,6 +266,65 @@ find_las_centroid = function(las, subsample=1e5) {
   return(centroid)
 }
 
+#' Add attribute `Distance` to TLS returns based on distance from scanner
+#'
+#' This function takes the path of a .las or .laz file and return a `LAS` object
+#' containing the new attribute `Distance` represetning the distance to the scanner
+#' The scanner location is determined by (1) using the `find_las_centroid()` function,
+#' then (2) locates the scanner elevation by adding the distance from the `scanner_ht`
+#' parameter to the elevation of the centroid. Elevation is determined using the
+#' `lidR::classify_ground` and `lidR::rasterize_terrain` functions.
+#' @param las_filename path to a `.las` or `.laz` file
+#' @param scanner_ht height of scanner above ground. Defaults to 1.75
+#' @param subsample subsamplign factor used in `find_las_centroid()` to reduce lidar resoultion. Defaults to 1e05.
+#' @examples
+#'
+#' las_fn = 'data.laz'
+#' las = las_add_scanner_distance(las_fn)
+#' lidR::writeLAS(las, 'data_withDistance.laz')
+#' @export
+las_add_scanner_distance = function(las_filename,
+                                    scanner_ht = 1.75,
+                                    subsample = 1e05) {
+  # Does it already have a Distance column?
+  hdr = lidR::readLASheader(las_filename)
+  extrabytes = names(hdr@VLR$Extra_Bytes$`Extra Bytes Description`)
+  if('Distance' %in% extrabytes) {
+    warning('source file already contains Distance column. Returning NULL')
+    return(NULL)
+  }
+
+  # Find XYZ location of scan from centroid and elevation
+  message('Step 1: Finding scanner XY location')
+  check_for_lax(las_filename)
+  centroid = find_las_centroid(las_filename, subsample=subsample)
+  message('Step 2: Loading full resolution las')
+  las = lidR::readLAS(las_fn)
+  message('Step 3: Mapping elevation to catpure scanner Z location')
+  las = lidR::classify_ground(las, algorithm = csf())
+  dem = lidR::rasterize_terrain(las, 1, tin())
+  scanner_elev = terra::extract(dem, centroid)$Z
+  scanner_elev = scanner_elev + scanner_ht
+  scanner_loc = as.data.frame(sf::st_coordinates(centroid))
+  scanner_loc$Z = scanner_elev
+  message(paste0('\tScanner location: ', paste0(round(as.numeric(scanner_loc),1), collapse=' ')))
+
+  # Use 3d distance function from lidar returns to scanner location
+  message('Step 4: Calculating distance between returns and scanner')
+  mat = dplyr::as_tibble((dplyr::select(las@data, X, Y, Z)))
+  loc = as.matrix(scanner_loc)
+  dx = (mat[,1] - loc[1])^2
+  dy = (mat[,2] - loc[2])^2
+  dz = (mat[,3] - loc[3])^2
+  dist = sqrt(dx + dy + dz)
+  dist = dist$X
+
+  # add attribute to las and return
+  message('Step 5: Attaching distance measurements to las')
+  las = lidR::add_lasattribute(las, dist, 'Distance', 'Distance in meters from scanner')
+  return(las)
+}
+
 #' Combine overlapping TLS scans into tiled LAS scene
 #'
 #' This function takes an input directory of TLS scans that are overlapping
@@ -352,8 +411,8 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
   cl = parallel::makeCluster(n_cores)
   doSNOW::registerDoSNOW(cl)
-  pb = txtProgressBar(max = length(todo_list), style = 3)
-  progress = function(n) setTxtProgressBar(pb, n)
+  pb = utils::txtProgressBar(max = length(todo_list), style = 3)
+  progress = function(n) utils::setTxtProgressBar(pb, n)
   opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
   out = foreach::foreach(t=todo_list, .errorhandling = 'pass', .packages=c('sf', 'lidR'), .options.snow=opts) %dopar% {

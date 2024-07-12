@@ -2,12 +2,12 @@
 
 export(check_for_lax)
 export(clip_las_catalog)
-export(clip_voi)
 export(compress_las)
 export(find_ctg_centroids)
 export(find_las_centroid)
 export(get_ctg_crs)
 export(get_dem_csm_chm)
+export(las_add_scanner_distance)
 export(make_scan_points)
 export(segment_with_spanner)
 export(spatial_to_coords)
