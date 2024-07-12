@@ -1,5 +1,5 @@
 Package: landecoutils
-Title: What the Package Does (One Line, Title Case)
+Title: Utility Functions for the Landscape Ecology Lab
 Version: 0.0.0.9000
 Authors@R: 
     person("Jeffery B.", "Cannon", , "jeffery.cannon@jonesctr.org", role = c("aut", "cre"),

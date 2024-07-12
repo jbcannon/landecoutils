@@ -16,5 +16,6 @@ This function takes a directory of LAS files and compresses them to LAZ.
 The original LAS files are deleted assuming you want to save space.
 }
 \examples{
-compress_las('E:/my/las/dir/', n_cores=2)
+## NOT RUN ##
+# compress_las('E:/my/las/dir/', n_cores=2)
 }

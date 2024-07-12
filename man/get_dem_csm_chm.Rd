@@ -15,7 +15,7 @@ get_dem_csm_chm(las, res = 0.5)
 This function takes a LAS object and returns a digital elevation model
 (dem), a canopy surface model (csm), and a canopy height model (chm)
 using default algorithms in lidR. Can be used with lidR::catalog_map.
-Returns a 3-layered SpatRast object with names dem, csm, chm.
+Returns a 3-lasyered SpatRast object with names dem, csm, chm.
 }
 \examples{
 library(terra)

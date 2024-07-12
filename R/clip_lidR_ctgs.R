@@ -3,7 +3,7 @@
 #' This function takes a LAS object and returns a digital elevation model
 #' (dem), a canopy surface model (csm), and a canopy height model (chm)
 #' using default algorithms in lidR. Can be used with lidR::catalog_map.
-#' Returns a 3-layered SpatRast object with names dem, csm, chm.
+#' Returns a 3-lasyered SpatRast object with names dem, csm, chm.
 #' @param las LAS object from lidR package to create model
 #' @param res output resolution in m
 #' @examples
@@ -38,7 +38,8 @@ get_dem_csm_chm = function(las, res=0.5) {
 #' @param las_dir path to a directory containing .LAS files to compress
 #' @param n_cores number of cores to create doSNOW cluster
 #' @examples
-#' compress_las('E:/my/las/dir/', n_cores=2)
+#' ## NOT RUN ##
+#' # compress_las('E:/my/las/dir/', n_cores=2)
 #' @export
 compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
   files = list.files(las_dir, '.las', full.names=TRUE)
@@ -218,8 +219,10 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   #To avoid rbind errors, Find common columns among scans and keep only those
   common_cols = lapply(combined_las, function(x) colnames(x@data))
   common_cols = Reduce(intersect, common_cols)
+  cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
+  if('Distance' %in% common_cols) cols_to_keep = c(cols_to_keep, 'Distance')
   combined_las = lapply(combined_las, function(x) {
-    x@data = x@data[, c('X', 'Y', 'Z', 'gpstime', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')]
+    x@data = x@data[, cols_to_keep]
     return(x)})
       #make sure las portion with highest NumberofReturns is listed first so bit count is set correctly
   whichMaxReturns = which.max(sapply(combined_las, function(x) max((x@data$NumberOfReturns))))
@@ -298,9 +301,10 @@ las_add_scanner_distance = function(las_filename,
   message('Step 1: Finding scanner XY location')
   check_for_lax(las_filename)
   centroid = find_las_centroid(las_filename, subsample=subsample)
-  message('Step 2: Loading full resolution las')
-  las = lidR::readLAS(las_fn)
-  message('Step 3: Mapping elevation to catpure scanner Z location')
+
+  message('Step 2: Mapping elevation to capture scanner Z location')
+  filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5')
+  las = lidR::readLAS(las_fn, filter=filt)
   las = lidR::classify_ground(las, algorithm = csf())
   dem = lidR::rasterize_terrain(las, 1, tin())
   scanner_elev = terra::extract(dem, centroid)$Z
@@ -308,6 +312,9 @@ las_add_scanner_distance = function(las_filename,
   scanner_loc = as.data.frame(sf::st_coordinates(centroid))
   scanner_loc$Z = scanner_elev
   message(paste0('\tScanner location: ', paste0(round(as.numeric(scanner_loc),1), collapse=' ')))
+
+  message('Step 3: Loading full resolution las')
+  las = lidR::readLAS(las_fn)
 
   # Use 3d distance function from lidar returns to scanner location
   message('Step 4: Calculating distance between returns and scanner')
@@ -440,18 +447,22 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     combined_las = combined_las[!sapply(combined_las, is.null)]
     common_cols = lapply(combined_las, function(x) colnames(x@data))
     common_cols = Reduce(intersect, common_cols)
+    cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
+    if('Distance' %in% common_cols) cols_to_keep = c(cols_to_keep, 'Distance')
     combined_las = lapply(combined_las, function(x) {
-      x@data = x@data[, c('X', 'Y', 'Z', 'gpstime', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')]
+      x@data = dplyr::select(x@data, all_of(cols_to_keep))
       return(x)})
     #make sure las portion with highest NumberofReturns is listed first so bit count is set correctly
     whichMaxReturns = which.max(sapply(combined_las, function(x) max((x@data$NumberOfReturns))))
     n = c(whichMaxReturns, (1:length(combined_las))[-whichMaxReturns])
     combined_las = do.call(rbind,combined_las[n])
     combined_las@header@VLR = list()
-    st_crs(combined_las) = proj
+    sf::st_crs(combined_las) = proj
+    dist = combined_las$Distance
+    combined_las = lidR::add_lasattribute(combined_las, dist, 'Distance', 'Distance from scanner')
     #write tile to disk
     cat('.....scans stitched. writing tile to disk')
-    lidR::writeLAS(lidR::las_update(combined_las), out_las, index=TRUE)
+    lidR::writeLAS(combined_las, out_las, index=TRUE)
     return(NULL)
   }
   close(pb)
