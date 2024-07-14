@@ -255,11 +255,11 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
 #' cent = find_las_centroid(las)
 #' plot(cent$geom)
 #' @export
-find_las_centroid = function(las, subsample=1e5) {
+find_las_centroid = function(las, subsample=1e4) {
   s = as.character(format(subsample, scientific=FALSE))
-  filt = paste0('-keep_every_nth ', s)
+  filt = paste0('-keep_every_nth ', s, '  -keep_class 2')
   las_thin = lidR::readLAS(las, filter=filt)
-  centroid = apply(las_thin@data[, c('X', 'Y', 'Z')], 2, mean)
+  centroid = apply(las_thin@data[, c('X', 'Y')], 2, mean)
   centroid = sf::st_point(centroid[1:2])
   out = data.frame(id='centroid')
   out$geom = sf::st_sfc(centroid)
