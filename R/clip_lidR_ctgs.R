@@ -260,7 +260,7 @@ find_las_centroid = function(las, subsample=1e4) {
   filt = paste0('-keep_every_nth ', s, '  -keep_class 2')
   las_thin = lidR::readLAS(las, filter=filt)
   # If ground isn't classified, read more points
-  if(nrow(las_thin) == 0 {
+  if(nrow(las_thin) == 0) {
     s = as.character(format(subsample*10, scientific=FALSE))
     filt = paste0('-keep_every_nth ', s)
     las_thin = lidR::readLAS(las, filter=filt)
