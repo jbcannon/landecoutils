@@ -312,6 +312,11 @@ las_add_scanner_distance = function(las_filename,
   message('Step 2: Mapping elevation to capture scanner Z location')
   filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5 -keep_class 2')
   las = lidR::readLAS(las_fn, filter=filt)
+  if(nrow(las@data) == 0) {
+    filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5')
+    las = lidR::readLAS(las_fn, filter=filt)
+    las = lidR::classify_ground(las_fn, csf())
+  }
   dem = lidR::rasterize_terrain(las, 1, tin())
   scanner_elev = terra::extract(dem, centroid)$Z
   scanner_elev = scanner_elev + scanner_ht
