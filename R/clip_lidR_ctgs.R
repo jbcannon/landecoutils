@@ -289,7 +289,7 @@ find_las_centroid = function(las, subsample=1e4) {
 #' @export
 las_add_scanner_distance = function(las_filename,
                                     scanner_ht = 1.75,
-                                    subsample = 1e05) {
+                                    subsample = 1e4) {
   # Does it already have a Distance column?
   hdr = lidR::readLASheader(las_filename)
   extrabytes = names(hdr@VLR$Extra_Bytes$`Extra Bytes Description`)
@@ -304,9 +304,8 @@ las_add_scanner_distance = function(las_filename,
   centroid = find_las_centroid(las_filename, subsample=subsample)
 
   message('Step 2: Mapping elevation to capture scanner Z location')
-  filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5')
+  filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5 -keep_class 18')
   las = lidR::readLAS(las_fn, filter=filt)
-  las = lidR::classify_ground(las, algorithm = csf())
   dem = lidR::rasterize_terrain(las, 1, tin())
   scanner_elev = terra::extract(dem, centroid)$Z
   scanner_elev = scanner_elev + scanner_ht
