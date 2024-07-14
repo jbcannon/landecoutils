@@ -315,7 +315,7 @@ las_add_scanner_distance = function(las_filename,
   if(nrow(las@data) == 0) {
     filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5')
     las = lidR::readLAS(las_fn, filter=filt)
-    las = lidR::classify_ground(las_fn, csf())
+    las = lidR::classify_ground(las, csf())
   }
   dem = lidR::rasterize_terrain(las, 1, tin())
   scanner_elev = terra::extract(dem, centroid)$Z
