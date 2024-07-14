@@ -259,6 +259,12 @@ find_las_centroid = function(las, subsample=1e4) {
   s = as.character(format(subsample, scientific=FALSE))
   filt = paste0('-keep_every_nth ', s, '  -keep_class 2')
   las_thin = lidR::readLAS(las, filter=filt)
+  # If ground isn't classified, read more points
+  if(nrow(las_thin) == 0 {
+    s = as.character(format(subsample*10, scientific=FALSE))
+    filt = paste0('-keep_every_nth ', s)
+    las_thin = lidR::readLAS(las, filter=filt)
+  }
   centroid = apply(las_thin@data[, c('X', 'Y')], 2, mean)
   centroid = sf::st_point(centroid[1:2])
   out = data.frame(id='centroid')
