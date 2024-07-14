@@ -311,10 +311,10 @@ las_add_scanner_distance = function(las_filename,
 
   message('Step 2: Mapping elevation to capture scanner Z location')
   filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5 -keep_class 2')
-  las = lidR::readLAS(las_fn, filter=filt)
+  las = lidR::readLAS(las_filename, filter=filt)
   if(nrow(las@data) == 0) {
     filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5')
-    las = lidR::readLAS(las_fn, filter=filt)
+    las = lidR::readLAS(las_filename, filter=filt)
     las = lidR::classify_ground(las, csf())
   }
   dem = lidR::rasterize_terrain(las, 1, tin())
@@ -325,7 +325,7 @@ las_add_scanner_distance = function(las_filename,
   message(paste0('\tScanner location: ', paste0(round(as.numeric(scanner_loc),1), collapse=' ')))
 
   message('Step 3: Loading full resolution las')
-  las = lidR::readLAS(las_fn)
+  las = lidR::readLAS(las_filename)
 
   # Use 3d distance function from lidar returns to scanner location
   message('Step 4: Calculating distance between returns and scanner')
