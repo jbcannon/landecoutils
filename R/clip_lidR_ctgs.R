@@ -343,7 +343,7 @@ las_add_scanner_distance = function(las_filename,
 #' @examples
 #' ## NOT RUN ##
 #' #las = readLAS('las1.laz')
-#' # corr = Correct_Amplitude_Xu2017(las)
+#' # corr = correct_Reflectance_Xu2017(las)
 #' # par(mfrow = c(1,2))
 #' # plot(las$Amplitude ~ las$Distance)
 #' # plot(corr, las$Distance)
