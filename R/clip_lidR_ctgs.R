@@ -8,6 +8,7 @@
 #' @param res output resolution in m
 #' @examples
 #' library(terra)
+#' library(lidR)
 #' las = readLAS('E:/mylas.laz')
 #' elev = get_cdem_csm_chm(las)
 #' plot(elev$dem)
@@ -119,7 +120,7 @@ check_for_lax = function(dir, n_cores=1, write_lax=TRUE) {
 #' @param subsample drop every `nth` return to speed up processing time. See `las_find_centroids`
 #' @examples
 #' library(sf)
-#' ctg = readTLScatalog('path/to/las/catalog')
+#' ctg = lidR::readLAScatalog('path/to/las/catalog')
 #' scan_locations = find_ctg_centroids(ctg, n_cores=4)
 #' plot(scan_locations$geom)
 #' @export
@@ -150,7 +151,7 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
 #' @param ctg a `LAScatalog` object containing LAS files
 #' @examples
 #' # Load LAScatalog and capture the crs
-#' ctg = readLAScatalog('path/to/LASfiles/')
+#' ctg = lidR::readLAScatalog('path/to/LASfiles/')
 #' myCRS = get_crg_crs(ctg)
 #' print(myCRS)
 #' @export
@@ -179,7 +180,7 @@ get_ctg_crs = function(ctg){
 #' If `scan_locations` is `NULL` then scan locations will be found automatically
 #' @examples
 #' # Load LAScatalog and clip to a region of interest specified by an sf object
-#' ctg = readLAScatalog('path/to/LASfiles/')
+#' ctg = lidR::readLAScatalog('path/to/LASfiles/')
 #' roi = sf::st_read('plot_boundary.shp')
 #' stitch_TLS_dir_to_LAS(ctg, 'output_path.las', roi)
 #' @export
@@ -378,7 +379,7 @@ correct_Reflectance_Xu2017 = function(las) {
 #' @param index boolean. Also write a lax file to index the points in the files. see `lidR::writeLAS`
 #' @examples
 #' # Load LAScatalog, clip, and tile for a large area specified by an sf object
-#' ctg = readLAScatalog('path/to/LASfiles/')
+#' ctg = lidR::readLAScatalog('path/to/LASfiles/')
 #' bnd = sf::st_read('plot_boundary.shp')
 #' stitch_TLS_dir_to_LAS_tiles(ctg, 'output_tiles', bnd, tile_size = 30)
 #' @export

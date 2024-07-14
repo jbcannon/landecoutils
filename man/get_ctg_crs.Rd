@@ -15,7 +15,7 @@ representing the coordinate reference system of the LASCatalog
 }
 \examples{
 # Load LAScatalog and capture the crs
-ctg = readLAScatalog('path/to/LASfiles/')
+ctg = lidR::readLAScatalog('path/to/LASfiles/')
 myCRS = get_crg_crs(ctg)
 print(myCRS)
 }

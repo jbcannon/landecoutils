@@ -19,6 +19,7 @@ Returns a 3-lasyered SpatRast object with names dem, csm, chm.
 }
 \examples{
 library(terra)
+library(lidR)
 las = readLAS('E:/mylas.laz')
 elev = get_cdem_csm_chm(las)
 plot(elev$dem)

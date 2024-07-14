@@ -21,7 +21,7 @@ Result of this function can be used as an input to \code{stitch_TLS_dir_to_LAS} 
 }
 \examples{
 library(sf)
-ctg = readTLScatalog('path/to/las/catalog')
+ctg = lidR::readLAScatalog('path/to/las/catalog')
 scan_locations = find_ctg_centroids(ctg, n_cores=4)
 plot(scan_locations$geom)
 }

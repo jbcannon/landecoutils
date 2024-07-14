@@ -41,7 +41,7 @@ keep only data columns which are common among all scans.
 }
 \examples{
 # Load LAScatalog and clip to a region of interest specified by an sf object
-ctg = readLAScatalog('path/to/LASfiles/')
+ctg = lidR::readLAScatalog('path/to/LASfiles/')
 roi = sf::st_read('plot_boundary.shp')
 stitch_TLS_dir_to_LAS(ctg, 'output_path.las', roi)
 }
