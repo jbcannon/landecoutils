@@ -332,6 +332,35 @@ las_add_scanner_distance = function(las_filename,
   return(las)
 }
 
+#' Correct Return Reflectance based on Distance using Xu et al. 2017
+#'
+#' This function takes a `LAS` input containing the fields `Amplitude` in dB and
+#' `Distance` in meteres. It applies a distance based correction using the methods
+#' of Xu et al. 2017. The formula only applies the correction based on distance, but
+#' not incident angle. The study used a REIGL VZ400i, but less sure if this applies
+#' to other scanners.
+#' @param las a `LAS` object containing attributes for `Amplitude` and `Distance`
+#' @examples
+#' ## NOT RUN ##
+#' #las = readLAS('las1.laz')
+#' # corr = Correct_Amplitude_Xu2017(las)
+#' # par(mfrow = c(1,2))
+#' # plot(las$Amplitude ~ las$Distance)
+#' # plot(corr, las$Distance)
+#' @export
+correct_Reflectance_Xu2017 = function(las) {
+  stopifnot(class(las) == 'LAS')
+  stopifnot('Amplitude' %in% colnames(las@data))
+  stopifnot('Distance' %in% colnames(las@data))
+  R = las$Distance
+  A = las$Amplitude
+  # Piecewise distance-base correction alogrith (F1) from Xu et al. 2017 Rem. Sens.
+  F11 = 1.623e-3*R^3 - 9.287e-2*R^2 +1.37*R + 25.88
+  F12 = 10*log(3.218e5/R^2, base=10)
+  Ic = ifelse(R < 20, F11, F12)
+  return(A - Ic)
+}
+
 #' Combine overlapping TLS scans into tiled LAS scene
 #'
 #' This function takes an input directory of TLS scans that are overlapping
