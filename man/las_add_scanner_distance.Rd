@@ -4,7 +4,7 @@
 \alias{las_add_scanner_distance}
 \title{Add attribute \code{Distance} to TLS returns based on distance from scanner}
 \usage{
-las_add_scanner_distance(las_filename, scanner_ht = 1.75, subsample = 1e+05)
+las_add_scanner_distance(las_filename, scanner_ht = 1.75, subsample = 10000)
 }
 \arguments{
 \item{las_filename}{path to a \code{.las} or \code{.laz} file}
