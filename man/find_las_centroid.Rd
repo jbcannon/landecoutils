@@ -4,7 +4,7 @@
 \alias{find_las_centroid}
 \title{Find centroid of large *.las}
 \usage{
-find_las_centroid(las, subsample = 1e+05)
+find_las_centroid(las, subsample = 10000)
 }
 \arguments{
 \item{las}{a \code{lidR::LAS} object for which you want to find a centroid}
