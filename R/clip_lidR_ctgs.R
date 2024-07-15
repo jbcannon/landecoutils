@@ -231,7 +231,7 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   combined_las = do.call(rbind,combined_las[n])
   combined_las = do.call(rbind,combined_las)
   combined_las@header@VLR = list()
-  st_crs(combined_las) = proj
+  lidR::st_crs(combined_las) = proj
   lidR::writeLAS(lidR::las_update(combined_las), out_las, index=index)
   cat('combined las written to', out_las, '\n')
   return(NULL)
@@ -306,8 +306,8 @@ las_add_scanner_distance = function(las_filename,
   message('Step 2: Mapping elevation to capture scanner Z location')
   filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5')
   las = lidR::readLAS(las_filename, filter=filt)
-  las = lidR::classify_ground(las, csf())
-  dem = lidR::rasterize_terrain(las, 1, tin())
+  las = lidR::classify_ground(las, lidR::csf())
+  dem = lidR::rasterize_terrain(las, 1, lidR::tin())
   scanner_elev = terra::extract(dem, centroid)$Z
   scanner_elev = scanner_elev + scanner_ht
   scanner_loc = as.data.frame(sf::st_coordinates(centroid))
@@ -436,7 +436,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
 
   scan_locations = sf::st_transform(scan_locations, proj)
   scan_locations = sf::st_buffer(scan_locations, dist=max_scan_distance)
-  plot(scan_locations$geometry, col=rgb(0,0,1,0.05))
+  plot(scan_locations$geometry, col=grDevices::rgb(0,0,1,0.05))
   plot(grid$geometry, add= TRUE, border='red')
   plot(bnd$geometry, lwd = 2, border = "black", add = TRUE)
   Sys.sleep(0.5)
