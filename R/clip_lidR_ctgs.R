@@ -220,7 +220,7 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   #To avoid rbind errors, Find common columns among scans and keep only those
   common_cols = lapply(combined_las, function(x) colnames(x@data))
   common_cols = Reduce(intersect, common_cols)
-  cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
+  cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Amplitude', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
   if('Distance' %in% common_cols) cols_to_keep = c(cols_to_keep, 'Distance')
   combined_las = lapply(combined_las, function(x) {
     x@data = x@data[, cols_to_keep]
@@ -487,7 +487,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     combined_las = combined_las[!sapply(combined_las, is.null)]
     common_cols = lapply(combined_las, function(x) colnames(x@data))
     common_cols = Reduce(intersect, common_cols)
-    cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
+    cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Amplitude', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
     if('Distance' %in% common_cols) cols_to_keep = c(cols_to_keep, 'Distance')
     combined_las = lapply(combined_las, function(x) {
       x@data = dplyr::select(x@data, all_of(cols_to_keep))
