@@ -255,16 +255,10 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
 #' cent = find_las_centroid(las)
 #' plot(cent$geom)
 #' @export
-find_las_centroid = function(las, subsample=1e4) {
+find_las_centroid = function(las, subsample=1e5) {
   s = as.character(format(subsample, scientific=FALSE))
-  filt = paste0('-keep_every_nth ', s, '  -keep_class 2')
+  filt = paste0('-keep_every_nth ', s)
   las_thin = lidR::readLAS(las, filter=filt)
-  # If ground isn't classified, read more points
-  if(nrow(las_thin) == 0) {
-    s = as.character(format(subsample*10, scientific=FALSE))
-    filt = paste0('-keep_every_nth ', s)
-    las_thin = lidR::readLAS(las, filter=filt)
-  }
   centroid = apply(las_thin@data[, c('X', 'Y')], 2, mean)
   centroid = sf::st_point(centroid[1:2])
   out = data.frame(id='centroid')
@@ -295,7 +289,7 @@ find_las_centroid = function(las, subsample=1e4) {
 #' @export
 las_add_scanner_distance = function(las_filename,
                                     scanner_ht = 1.75,
-                                    subsample = 1e4) {
+                                    subsample = 1e5) {
   # Does it already have a Distance column?
   hdr = lidR::readLASheader(las_filename)
   extrabytes = names(hdr@VLR$Extra_Bytes$`Extra Bytes Description`)
@@ -310,13 +304,9 @@ las_add_scanner_distance = function(las_filename,
   centroid = find_las_centroid(las_filename, subsample=subsample)
 
   message('Step 2: Mapping elevation to capture scanner Z location')
-  filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5 -keep_class 2')
+  filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5')
   las = lidR::readLAS(las_filename, filter=filt)
-  if(nrow(las@data) == 0) {
-    filt = paste0('-keep_circle ', paste0(sf::st_coordinates(centroid), collapse = ' '), ' 5')
-    las = lidR::readLAS(las_filename, filter=filt)
-    las = lidR::classify_ground(las, csf())
-  }
+  las = lidR::classify_ground(las, csf())
   dem = lidR::rasterize_terrain(las, 1, tin())
   scanner_elev = terra::extract(dem, centroid)$Z
   scanner_elev = scanner_elev + scanner_ht
@@ -393,11 +383,9 @@ correct_Reflectance_Xu2017 = function(las) {
 #' bnd = sf::st_read('plot_boundary.shp')
 #' stitch_TLS_dir_to_LAS_tiles(ctg, 'output_tiles', bnd, tile_size = 30)
 #' @export
-stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, buffer = 10, max_scan_distance=60, index=TRUE, scan_locations=NULL) {
-  #require(lidR)
-  #require(sf)
+stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, buffer = 10, max_scan_distance=60, index=TRUE, scan_locations=NULL, Xu_correction = FALSE) {
 
-  # Load plot boundaries/buffer and create filter
+    # Load plot boundaries/buffer and create filter
   hdr = lidR::readLASheader(ctg$filename[1])
   proj = sf::st_crs(hdr@VLR$`WKT OGC CS`$`WKT OGC COORDINATE SYSTEM`)
   suppressMessages(sf::st_crs(bnd) <- proj)
@@ -411,13 +399,10 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   #create fishnet from extent
   ncol = (ex[3] - ex[1])/tile_size
   nrow = (ex[4] - ex[2]) / tile_size
-
-  grid = terra::rast(extent=ext(ex[c(1,3,2,4)]), ncols=ncol, nrows=nrow)
+  grid = terra::rast(extent=terra::ext(ex[c(1,3,2,4)]), ncols=ncol, nrows=nrow)
   grid = terra::as.polygons(grid)
   grid = sf::st_as_sf(grid)
   sf::st_crs(grid) = proj
-
-  #ex = sf::st_as_sf(terra::as.polygons(round(terra::ext(bnd_buff), 1)))
   grid = grid[sf::st_intersects(grid, bnd_buff, sparse=FALSE),]
 
   #Check to see what all is already complete
@@ -449,6 +434,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     }; scan_locations = do.call(rbind , scan_locations)
   }
 
+  scan_locations = sf::st_transform(scan_locations, proj)
   scan_locations = sf::st_buffer(scan_locations, dist=max_scan_distance)
   plot(scan_locations$geometry, col=rgb(0,0,1,0.05))
   plot(grid$geometry, add= TRUE, border='red')
@@ -490,16 +476,21 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Amplitude', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
     if('Distance' %in% common_cols) cols_to_keep = c(cols_to_keep, 'Distance')
     combined_las = lapply(combined_las, function(x) {
-      x@data = dplyr::select(x@data, all_of(cols_to_keep))
-      return(x)})
+      x@data = dplyr::select(x@data, dplyr::all_of(cols_to_keep))
+      return(x@data)})
     #make sure las portion with highest NumberofReturns is listed first so bit count is set correctly
-    whichMaxReturns = which.max(sapply(combined_las, function(x) max((x@data$NumberOfReturns))))
+    whichMaxReturns = which.max(sapply(combined_las, function(x) max((x$NumberOfReturns))))
     n = c(whichMaxReturns, (1:length(combined_las))[-whichMaxReturns])
     combined_las = do.call(rbind,combined_las[n])
-    combined_las@header@VLR = list()
-    sf::st_crs(combined_las) = proj
-    dist = combined_las$Distance
-    combined_las = lidR::add_lasattribute(combined_las, dist, 'Distance', 'Distance from scanner')
+    combined_las = lidR::LAS(combined_las, crs = proj, check = TRUE)
+    combined_las = lidR::las_update(combined_las)
+
+    ## Apply Xu et al. correction if required.
+    if(Xu_correction) {
+      Ic = correct_Reflectance_Xu2017(combined_las)
+      combined_las = lidR::add_lasattribute(combined_las, Ic, 'Reflectance_corrected', 'Xu et al. 2017 corrected Refl.')
+    }
+
     #write tile to disk
     cat('.....scans stitched. writing tile to disk')
     lidR::writeLAS(combined_las, out_las, index=TRUE)

@@ -13,7 +13,8 @@ stitch_TLS_dir_to_LAS_tiles(
   buffer = 10,
   max_scan_distance = 60,
   index = TRUE,
-  scan_locations = NULL
+  scan_locations = NULL,
+  Xu_correction = FALSE
 )
 }
 \arguments{
