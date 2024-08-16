@@ -482,8 +482,10 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     whichMaxReturns = which.max(sapply(combined_las, function(x) max((x$NumberOfReturns))))
     n = c(whichMaxReturns, (1:length(combined_las))[-whichMaxReturns])
     combined_las = do.call(rbind,combined_las[n])
-    combined_las = lidR::LAS(combined_las, crs = proj, check = TRUE)
-    combined_las = lidR::las_update(combined_las)
+    combined_las = dplyr::filter(combined_las, NumberOfReturns < 8)
+                                       combined_las = lidR::LAS(combined_las, crs = proj, check = TRUE)
+    
+                                       combined_las = lidR::las_update(combined_las)
 
     ## Apply Xu et al. correction if required.
     if(Xu_correction) {
