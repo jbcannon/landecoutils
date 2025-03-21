@@ -223,13 +223,12 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Amplitude', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
   if('Distance' %in% common_cols) cols_to_keep = c(cols_to_keep, 'Distance')
   combined_las = lapply(combined_las, function(x) {
-    x@data = x@data[, cols_to_keep]
+    x@data = x@data[, ..cols_to_keep]
     return(x)})
       #make sure las portion with highest NumberofReturns is listed first so bit count is set correctly
   whichMaxReturns = which.max(sapply(combined_las, function(x) max((x@data$NumberOfReturns))))
   n = c(whichMaxReturns, (1:length(combined_las))[-whichMaxReturns])
   combined_las = do.call(rbind,combined_las[n])
-  combined_las = do.call(rbind,combined_las)
   combined_las@header@VLR = list()
   lidR::st_crs(combined_las) = proj
   lidR::writeLAS(lidR::las_update(combined_las), out_las, index=index)
