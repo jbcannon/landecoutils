@@ -190,9 +190,9 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   proj = sf::st_crs(hdr@VLR$`WKT OGC CS`$`WKT OGC COORDINATE SYSTEM`)
   suppressMessages(sf::st_crs(roi) <- proj)
   roi_buff = sf::st_buffer(roi, dist=buffer)
-  #ex = sf::st_bbox(roi_buff)
+  ex = sf::st_bbox(roi_buff)
   #tmp = ex/tile_size
-  ex = c(floor(tmp[1]), floor(tmp[2]), ceiling(tmp[3]), ceiling(tmp[4]))*tile_size
+  #ex = c(floor(tmp[1]), floor(tmp[2]), ceiling(tmp[3]), ceiling(tmp[4]))*tile_size
   filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
   lidR::opt_filter(ctg) = filt
 
@@ -223,13 +223,12 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Amplitude', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
   if('Distance' %in% common_cols) cols_to_keep = c(cols_to_keep, 'Distance')
   combined_las = lapply(combined_las, function(x) {
-    x@data = x@data[, cols_to_keep]
+    x@data = x@data[, ..cols_to_keep]
     return(x)})
       #make sure las portion with highest NumberofReturns is listed first so bit count is set correctly
   whichMaxReturns = which.max(sapply(combined_las, function(x) max((x@data$NumberOfReturns))))
   n = c(whichMaxReturns, (1:length(combined_las))[-whichMaxReturns])
   combined_las = do.call(rbind,combined_las[n])
-  combined_las = do.call(rbind,combined_las)
   combined_las@header@VLR = list()
   lidR::st_crs(combined_las) = proj
   lidR::writeLAS(lidR::las_update(combined_las), out_las, index=index)
