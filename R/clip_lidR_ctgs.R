@@ -190,8 +190,8 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   proj = sf::st_crs(hdr@VLR$`WKT OGC CS`$`WKT OGC COORDINATE SYSTEM`)
   suppressMessages(sf::st_crs(roi) <- proj)
   roi_buff = sf::st_buffer(roi, dist=buffer)
-  ex = sf::st_bbox(roi_buff)
-  tmp = ex/tile_size
+  #ex = sf::st_bbox(roi_buff)
+  #tmp = ex/tile_size
   ex = c(floor(tmp[1]), floor(tmp[2]), ceiling(tmp[3]), ceiling(tmp[4]))*tile_size
   filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
   lidR::opt_filter(ctg) = filt
@@ -484,7 +484,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     combined_las = do.call(rbind,combined_las[n])
     combined_las = dplyr::filter(combined_las, NumberOfReturns < 8)
                                        combined_las = lidR::LAS(combined_las, crs = proj, check = TRUE)
-    
+
                                        combined_las = lidR::las_update(combined_las)
 
     ## Apply Xu et al. correction if required.
