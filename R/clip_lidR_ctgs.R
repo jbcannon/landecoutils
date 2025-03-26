@@ -191,8 +191,8 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   suppressMessages(sf::st_crs(roi) <- proj)
   roi_buff = sf::st_buffer(roi, dist=buffer)
   ex = sf::st_bbox(roi_buff)
-  tmp = ex/tile_size
-  ex = c(floor(tmp[1]), floor(tmp[2]), ceiling(tmp[3]), ceiling(tmp[4]))*tile_size
+  #tmp = ex/tile_size
+  #ex = c(floor(tmp[1]), floor(tmp[2]), ceiling(tmp[3]), ceiling(tmp[4]))*tile_size
   filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
   lidR::opt_filter(ctg) = filt
 
