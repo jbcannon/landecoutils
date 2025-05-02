@@ -233,7 +233,7 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
   lidR::st_crs(combined_las) = proj
   lidR::writeLAS(lidR::las_update(combined_las), out_las, index=index)
   cat('combined las written to', out_las, '\n')
-  return(NULL)
+  return(combined_las)
 }
 
 #' Find centroid of large *.las
