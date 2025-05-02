@@ -92,7 +92,7 @@ spatial_to_coords = function(in_file, csv_out = NULL, proj=32616) {
   if(!file.exists(in_file)) stop('input file does not exist')
   if(!is.null(csv_out)) {
     if(file.exists(csv_out)) stop('output file already exists')
-    if(tools::file_ext(csv_out) %in% c('txt', 'csv')) stop('output file must be *.txt or *.csv')
+    if(!tools::file_ext(csv_out) %in% c('txt', 'csv')) stop('output file must be *.txt or *.csv')
   }
   kml = sf::read_sf(in_file)
   kml = sf::st_transform(kml, sf::st_crs(proj))
