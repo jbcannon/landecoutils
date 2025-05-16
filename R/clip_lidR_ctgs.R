@@ -198,8 +198,8 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
 
   #Display catalog and ROI
   lidR::plot(ctg)
-  plot(roi$geometry, add=TRUE, lwd=2, col='white', border='white')
-  plot(roi_buff$geometry, add=TRUE, lty=2, border='white')
+  plot(roi[attr(roi, "sf_column")], add=TRUE, lwd=2, col='white', border='white')
+  plot(roi_buff[attr(roi_buff, "sf_column")], add=TRUE, lty=2, border='white')
   Sys.sleep(0.5)
 
   # Load TLS scans from directory and clip to roi.. rbind, and write to file.
@@ -259,11 +259,10 @@ find_las_centroid = function(las, subsample=1e5) {
   filt = paste0('-keep_every_nth ', s)
   las_thin = lidR::readLAS(las, filter=filt)
   centroid = apply(las_thin@data[, c('X', 'Y')], 2, mean)
-  centroid = sf::st_point(centroid[1:2])
-  out = data.frame(id='centroid')
-  out$geom = sf::st_sfc(centroid)
-  centroid = sf::st_as_sf(out)
+  centroid = as.data.frame(t(centroid))
+  centroid$id = 'centroid'
   centroid$fn = las
+  centroid = sf::st_as_sf(centroid, coords = c('X', 'Y'))
   sf::st_crs(centroid) = sf::st_crs(las_thin)
   if(subsample>1000) warning('Only ', round(1/subsample*100,3), '% of cloud used, centroid may be imprecise')
   return(centroid)
