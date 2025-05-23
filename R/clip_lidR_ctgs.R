@@ -1,3 +1,34 @@
+#' Function to clip large LAS object into small pieces
+#'
+#' This function clips a large LAS object such as that from a
+#' UAV-derived point cloud into smaller chunks using the
+#' `catalog_map` function.
+#' @param las_path character - path to large LAS file
+#' @param output_directory character - path to directory for output files.
+#' Outputs will be automatically named XLEFT_YBOTTOM.las'
+#' @param chunk_size numeric size of the chunks to break the file into
+#' @param chunk_alignment coordinates of origin of grid to which files
+#' @import lidR
+#' @examples
+#' library(lidR)
+#' library(landecoutils)
+#' large_file = 'C:/user/me/large_file.las'
+#' output_location = 'C:/user/me/outputs/'
+#' tile_large_LAS(large_file, output_location)
+#' @export
+tile_large_LAS = function(las_path, output_directory, chunk_size=100,
+                          chunk_alighment = c(0,0)) {
+  ctg = lidR::readLAScatalog(las_path)
+  lidR::opt_chunk_size(ctg) = chunk_size
+  lidR::opt_chunk_buffer(ctg) = 0
+  lidR::opt_chunk_alignment(ctg) = chunk_alignment
+  lidR::plot(ctg, chunk_pattern=TRUE)
+  lidR::opt_output_files(ctg) = paste0(output_directory, '/{XLEFT}_{YBOTTOM}')
+  lidR::catalog_map(ctg, function(las) return(las))
+  cat('files output to:\n', output_directory)
+  return(NULL)
+}
+
 #' Create elevation products from a LAS tile
 #'
 #' This function takes a LAS object and returns a digital elevation model
