@@ -51,6 +51,7 @@ dbh_equiv = function(dbh, na.rm=TRUE) {
 #' @examples
 #' library(landecoutils)
 #' print(ba(c(.101, .064, NA, 0.023), na.rm=TRUE))
+#' @export
 ba = function(dbh, na.rm = TRUE) {
   if(na.rm) dbh = dbh[!is.na(dbh)]
   ba = pi*(dbh/200)^2
