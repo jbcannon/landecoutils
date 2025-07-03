@@ -54,6 +54,6 @@ dbh_equiv = function(dbh, na.rm=TRUE) {
 #' @export
 ba = function(dbh, na.rm = TRUE) {
   if(na.rm) dbh = dbh[!is.na(dbh)]
-  ba = pi*(dbh/200)^2
+  ba = pi*(dbh/2)^2
   return(ba)
 }
