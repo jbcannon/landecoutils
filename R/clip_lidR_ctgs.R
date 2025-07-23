@@ -467,7 +467,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   scan_locations = sf::st_buffer(scan_locations, dist=max_scan_distance)
   plot(scan_locations$geometry, col=grDevices::rgb(0,0,1,0.05))
   plot(grid$geometry, add= TRUE, border='red')
-  plot(bnd$geometry, lwd = 2, border = "black", add = TRUE)
+  plot(st_geometry(bnd), lwd = 2, border = "black", add = TRUE)
   Sys.sleep(0.5)
 
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
