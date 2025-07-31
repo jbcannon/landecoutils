@@ -99,18 +99,19 @@ compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
 #' original LAS resulting in possible corruption of the original file if the
 #' process was interrupted. This updated version uses temporary files to avoid
 #' this problem.
-#' @param dir path to a directory containing .LAS or .LAZ files to index
+#' @param input can be a LASCatalog from `lidR` package or a path to a directory containing .LAS or .LAZ files to index
 #' @param n_cores number of cores to create doSNOW cluster
 #' @param write_lax indicates if .lax file should be written (`TRUE`), or only
 #' checked for (`FALSE`)
 #' @examples
 #' check_for_lax('E:/my/las/dir/', n_cores=4)
 #' @export
-check_for_lax = function(dir, n_cores=1, write_lax=TRUE) {
+check_for_lax = function(input, n_cores=1, write_lax=TRUE) {
   #check inputs for validity
   if(!write_lax %in% c(TRUE, FALSE)) stop('write_lax must be TRUE/FALSE')
-  laz = list.files(dir, pattern='.las$|laz$', full.names = TRUE)
-  if(length(laz) < 0) stop('no .LAS or .LAZ found in `dir`')
+  if(is.character(input))  laz = list.files(dir, pattern='.las$|laz$', full.names = TRUE)
+  if(class(input) == 'LASCatalog') laz = input$filename
+  if(length(laz) < 0) stop('no .LAS or .LAZ found in `input`')
 
   #check which files are missing indexes
   lax = list.files(dir, pattern='.lax', full.names = TRUE)
@@ -148,18 +149,17 @@ check_for_lax = function(dir, n_cores=1, write_lax=TRUE) {
 #'
 #' @param ctg a `lidR::LAScatalog` object for which you want to find a centroids of all scan locations
 #' @param n_cores a number of cores to use for parallel processing.
-#' @param subsample drop every `nth` return to speed up processing time. See `las_find_centroids`
+#' @param res Resolution to thin the point cloud for efficiency.  See `las_find_centroids`
 #' @examples
 #' library(sf)
 #' ctg = lidR::readLAScatalog('path/to/las/catalog')
 #' scan_locations = find_ctg_centroids(ctg, n_cores=4)
 #' plot(scan_locations$geom)
 #' @export
-find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
-  if(subsample>1000) warning('Only ', round(1/subsample*100,3), '% of cloud used, centroid may be imprecise')
-  s = as.character(format(subsample, scientific=FALSE))
-  filt = paste0('-keep_every_nth ', s)
-  centroids = list()
+#'
+#'
+
+find_ctg_centroids = function(ctg, n_cores=4, res=1) {
   cl = parallel::makeCluster(n_cores)
   doSNOW::registerDoSNOW(cl)
   pb = utils::txtProgressBar(max = length(ctg$filename), style = 3)
@@ -167,11 +167,13 @@ find_ctg_centroids = function(ctg, n_cores=1, subsample=1e4) {
   opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
   centroids = foreach::foreach(fn = ctg$filename, .options.snow=opts) %dopar% {
-    return(suppressWarnings(find_las_centroid(fn, subsample=subsample)))
+    gc()
+    return(suppressWarnings(landecoutils::find_las_centroid(fn, res=res)))
   }
   close(pb)
   parallel::stopCluster(cl)
   centroids = do.call(rbind, centroids)
+  gc()
   return(centroids)
 }
 
@@ -215,11 +217,16 @@ get_ctg_crs = function(ctg){
 #' roi = sf::st_read('plot_boundary.shp')
 #' stitch_TLS_dir_to_LAS(ctg, 'output_path.las', roi)
 #' @export
+#'
+
 stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distance=60, index=TRUE, scan_locations=NULL) {
+
   # Load plot boundaries/buffer and create filter
   hdr = lidR::readLASheader(ctg$filename[1])
   proj = sf::st_crs(hdr@VLR$`WKT OGC CS`$`WKT OGC COORDINATE SYSTEM`)
   suppressMessages(sf::st_crs(roi) <- proj)
+
+
   roi_buff = sf::st_buffer(roi, dist=buffer)
   ex = sf::st_bbox(roi_buff)
   #tmp = ex/tile_size
@@ -276,7 +283,7 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
 #' LAS point density is low.
 #'
 #' @param las a `lidR::LAS` object for which you want to find a centroid
-#' @param subsample drop every `nth` return to speed up processing time
+#' @param res resolution to thin the point cloud for efficiency
 #' @examples
 #' # Load large LAS file and identify the centroid (i.e., scan location)
 #' library(lidR)
@@ -285,17 +292,15 @@ stitch_TLS_dir_to_LAS = function(ctg, out_las, roi, buffer = 10, max_scan_distan
 #' cent = find_las_centroid(las)
 #' plot(cent$geom)
 #' @export
-find_las_centroid = function(las, subsample=1e5) {
-  s = as.character(format(subsample, scientific=FALSE))
-  filt = paste0('-keep_every_nth ', s)
-  las_thin = lidR::readLAS(las, filter=filt)
+find_las_centroid = function(las, res = 1) {
+  filt = paste0('-thin_with_grid ', res)
+  las_thin = lidR::readLAS(las, filt)
   centroid = apply(las_thin@data[, c('X', 'Y')], 2, mean)
   centroid = as.data.frame(t(centroid))
   centroid$id = 'centroid'
   centroid$fn = las
   centroid = sf::st_as_sf(centroid, coords = c('X', 'Y'))
   sf::st_crs(centroid) = sf::st_crs(las_thin)
-  if(subsample>1000) warning('Only ', round(1/subsample*100,3), '% of cloud used, centroid may be imprecise')
   return(centroid)
 }
 
@@ -406,18 +411,46 @@ correct_Reflectance_Xu2017 = function(las) {
 #' @param n_cores number of cores to use in parallel processing
 #' @param max_scan_distance maximum distance from scan to be included. Evaluated using `find_las_centroid()`
 #' @param index boolean. Also write a lax file to index the points in the files. see `lidR::writeLAS`
+#' @param timeout numeric in seconds. Number of seconds for timeout on a tile
+#' before proceeding to the next one. This avoids cores getting hung up on
+#' problem tiles, so that that can be trouble shooted separately. This may not
+#' be necessary in later versions.
 #' @examples
 #' # Load LAScatalog, clip, and tile for a large area specified by an sf object
 #' ctg = lidR::readLAScatalog('path/to/LASfiles/')
 #' bnd = sf::st_read('plot_boundary.shp')
 #' stitch_TLS_dir_to_LAS_tiles(ctg, 'output_tiles', bnd, tile_size = 30)
 #' @export
-stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, buffer = 10, max_scan_distance=60, index=TRUE, scan_locations=NULL, Xu_correction = FALSE) {
+stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size, n_cores,
+                                       buffer = 10, max_scan_distance=60,
+                                       bnd=NULL, index=TRUE, scan_locations=NULL,
+                                       timeout = 600) {
+  # Check for duplicate scans
+  check_for_duplicate_scans(ctg)
+  if(!dir.exists(out_dir)) {
+    cat(out_dir, 'does not exist, creating')
+    dir.create(out_dir, recursive = TRUE)
+  }
 
-    # Load plot boundaries/buffer and create filter
+  # Clean up or create Plot boundaries and place in correct projection.
   hdr = lidR::readLASheader(ctg$filename[1])
   proj = sf::st_crs(hdr@VLR$`WKT OGC CS`$`WKT OGC COORDINATE SYSTEM`)
-  suppressMessages(sf::st_crs(bnd) <- proj)
+  # Generate scan locations if they do not exist
+  if(is.null(scan_locations)) {
+    tmp = landecoutils::find_ctg_centroids(ctg, n_cores = 6, res=1)
+    scan_locations = sf::st_transform(tmp, proj)
+  }
+  # Generate boundary from scan_locations if it does not exist
+  if(is.null(bnd)) {
+    bnd = scan_locations
+    bnd = sf::st_convex_hull(sf::st_union(bnd))
+    sf::st_crs(bnd) = sf::st_crs(scan_locations)
+  }
+
+  bnd = sf::st_transform(bnd, proj)
+  scan_locations = sf::st_transform(scan_locations, proj)
+
+  # Create ctg filter based on boundary
   bnd_buff = sf::st_buffer(bnd, dist=buffer)
   ex = sf::st_bbox(bnd_buff)
   filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
@@ -447,27 +480,12 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
     cat('all scans already tiled')
     return(NULL)
   }
+  todo_list = sample(todo_list) #reorder to avoid pileups
 
-  #Get all scan centroids once
-  if(is.null(scan_locations)) {
-    cat('finding all scan footprints within', max_scan_distance, 'meters\n')
-    scan_locations = list()
-    i=1
-    for(fn in ctg$filename) {
-      cat('.....',i, 'of', length(ctg$filename), '\n')
-      scan_centroid = suppressMessages(find_las_centroid(fn))
-      scan_location = sf::st_buffer(scan_centroid, dist=max_scan_distance)
-      scan_location$fn=fn
-      scan_locations[[length(scan_locations)+1]] = scan_location
-      i=i+1
-    }; scan_locations = do.call(rbind , scan_locations)
-  }
-
-  scan_locations = sf::st_transform(scan_locations, proj)
-  scan_locations = sf::st_buffer(scan_locations, dist=max_scan_distance)
-  plot(scan_locations$geometry, col=grDevices::rgb(0,0,1,0.05))
-  plot(grid$geometry, add= TRUE, border='red')
-  plot(st_geometry(bnd), lwd = 2, border = "black", add = TRUE)
+  scan_locations = sf::st_buffer(scan_locations, dist = max_scan_distance)
+  plot(scan_locations$geometry, col = grDevices::rgb(0, 0, 1, 0.05))
+  plot(grid$geometry, add = TRUE, border = "red")
+  plot(bnd, lwd = 2, border = "white", add = TRUE)
   Sys.sleep(0.5)
 
   # run through grid tiles, load proximal TLS scans from directory and clip to bnd. rbind, and write to file.
@@ -477,55 +495,54 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, bnd, tile_size, n_cores, bu
   progress = function(n) utils::setTxtProgressBar(pb, n)
   opts = list(progress = progress)
   `%dopar%` = foreach::`%dopar%`
-  out = foreach::foreach(t=todo_list, .errorhandling = 'pass', .packages=c('sf', 'lidR'), .options.snow=opts) %dopar% {
+  if(is.null(timeout)) timeout = 1e9
+  out = foreach::foreach(t=todo_list, .errorhandling = 'stop', .packages=c('sf', 'lidR'), .options.snow=opts) %dopar% {
     # Load and display tile
-    cat('\nloading tile', t, 'of', nrow(grid), '\n')
-    tile = grid[t,]
-    ex = sf::st_bbox(tile)
-    out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.laz')
-    out_las = gsub('\\/\\/', '\\/', out_las)
-    if(file.exists(out_las)) return(NULL)
-    scans_to_load = which(sf::st_intersects(tile, scan_locations, sparse = FALSE))
-    scans_to_load = dplyr::slice(scan_locations, scans_to_load)
-    if(nrow(scans_to_load)<1) return(NULL)
+    R.utils::withTimeout({
+      cat('\nloading tile', t, 'of', nrow(grid), '\n')
+      tile = grid[t,]
+      ex = sf::st_bbox(tile)
+      out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.laz')
+      out_las = gsub('\\/\\/', '\\/', out_las)
+      if(file.exists(out_las)) return(NULL)
+      scans_to_load = which(sf::st_intersects(tile, scan_locations, sparse = FALSE))
+      scans_to_load = dplyr::slice(scan_locations, scans_to_load)
+      if(nrow(scans_to_load)<1) return(NULL)
+      extent_filter = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
 
-    #loop through relevant scans, clip and
-    combined_las = list()
-    filt = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
-    for(i in 1:nrow(scans_to_load)) {
-      cat('.....appending scan', i, 'of', nrow(scans_to_load), '\n')
-      roi = sf::st_intersection(tile, scans_to_load[i,])
-      combined_las[[i]] = lidR::clip_roi(lidR::readLAS(scans_to_load[i,]$fn, filter=filt), roi)
-    }
+      #loop through relevant scans, clip and combine
+      combined_las = list()
+      for(i in 1:nrow(scans_to_load)) {
+        cat('.....appending scan', i, 'of', nrow(scans_to_load), '\n')
+        scan_coords = sf::st_coordinates(scans_to_load)[i,c('X','Y')]
+        distance_filter = paste('-keep_circle ', round(scan_coords['X'],2), round(scan_coords['Y'],2), max_scan_distance)
+        combined_filter = paste(extent_filter, distance_filter)
+        combined_las[[i]] = lidR::readLAS(scans_to_load[i,]$fn, filter=combined_filter)
+      }
 
-    #To avoid rbind errors, Find common columns among scans and keep only those
-    combined_las = combined_las[!sapply(combined_las, is.null)]
-    common_cols = lapply(combined_las, function(x) colnames(x@data))
-    common_cols = Reduce(intersect, common_cols)
-    cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Amplitude', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
-    if('Distance' %in% common_cols) cols_to_keep = c(cols_to_keep, 'Distance')
-    combined_las = lapply(combined_las, function(x) {
-      x@data = dplyr::select(x@data, dplyr::all_of(cols_to_keep))
-      return(x@data)})
-    #make sure las portion with highest NumberofReturns is listed first so bit count is set correctly
-    whichMaxReturns = which.max(sapply(combined_las, function(x) max((x$NumberOfReturns))))
-    n = c(whichMaxReturns, (1:length(combined_las))[-whichMaxReturns])
-    combined_las = do.call(rbind,combined_las[n])
-    combined_las = dplyr::filter(combined_las, NumberOfReturns < 8)
-                                       combined_las = lidR::LAS(combined_las, crs = proj, check = TRUE)
+      #To avoid rbind errors, Find common columns among scans and keep only those
+      combined_las = combined_las[!sapply(combined_las, is.null)]
+      combined_las = combined_las[sapply(combined_las, nrow)>0]
+      common_cols = lapply(combined_las, function(x) colnames(x@data))
+      common_cols = Reduce(intersect, common_cols)
+      cols_to_keep = c('X', 'Y', 'Z', 'gpstime', 'Amplitude', 'Intensity', 'ReturnNumber', "NumberOfReturns", 'Classification', 'Reflectance', 'Deviation')
+      if('Distance' %in% common_cols) cols_to_keep = c(cols_to_keep, 'Distance')
+      combined_las = lapply(combined_las, function(x) {
+        x@data = dplyr::select(x@data, dplyr::all_of(cols_to_keep))
+        return(x@data)})
+      #make sure las portion with highest NumberofReturns is listed first so bit count is set correctly
+      whichMaxReturns = which.max(sapply(combined_las, function(x) max((x$NumberOfReturns))))
+      n = c(whichMaxReturns, (1:length(combined_las))[-whichMaxReturns])
+      combined_las = do.call(rbind,combined_las[n])
+      combined_las = dplyr::filter(combined_las, NumberOfReturns < 8)
+      combined_las = lidR::LAS(combined_las, crs = proj, check = TRUE)
+      combined_las = lidR::las_update(combined_las)
 
-                                       combined_las = lidR::las_update(combined_las)
-
-    ## Apply Xu et al. correction if required.
-    if(Xu_correction) {
-      Ic = correct_Reflectance_Xu2017(combined_las)
-      combined_las = lidR::add_lasattribute(combined_las, Ic, 'Reflectance_corrected', 'Xu et al. 2017 corrected Refl.')
-    }
-
-    #write tile to disk
-    cat('.....scans stitched. writing tile to disk')
-    lidR::writeLAS(combined_las, out_las, index=TRUE)
-    return(NULL)
+      #write tile to disk
+      cat('.....scans stitched. writing tile to disk')
+      lidR::writeLAS(combined_las, out_las, index=TRUE)
+      return(NULL)
+      }, timeout = timeout)
   }
   close(pb)
   parallel::stopCluster(cl)
@@ -566,4 +583,27 @@ clip_las_catalog = function(dir, bnd, output_dir) {
     cat('...writing\n')
     lidR::writeLAS(x, fn, index=TRUE)
   }
+}
+
+#' Check LAS Catalog for duplicate scans, this will reduce errors elsewhere.
+#'
+#' This function takes a LAS Catalog and throws an error
+#' if any duplicate scan positions are detected. These files are sometimes
+#' generated if a bad scan was taken in the field and a second scan
+#' was generated from the same position
+#' @param ctg a LAS Catalog
+#' @export
+check_for_duplicate_scans = function(ctg) {
+  fns = ctg$filename
+  scanpos = gsub('ScanPos', '', substr(basename(fns),0,10))
+  dups = duplicated(scanpos)
+  dups = which(scanpos == scanpos[dups])
+  dups = basename(fns)[dups]
+  if(length(dups) > 0) {
+    cat(paste0('possible duplicate scans detected:\n\t', paste0(dups, collapse='\n\t'), sep=''))
+    stop('dup scans detected')
+  } else {
+    cat('no duplicate scans detected\n')
+  }
+  return(NULL)
 }

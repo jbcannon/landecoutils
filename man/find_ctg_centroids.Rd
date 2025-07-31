@@ -4,14 +4,14 @@
 \alias{find_ctg_centroids}
 \title{Find scan locations from a \code{LAScatalog}}
 \usage{
-find_ctg_centroids(ctg, n_cores = 1, subsample = 10000)
+find_ctg_centroids(ctg, n_cores = 4, res = 1)
 }
 \arguments{
 \item{ctg}{a \code{lidR::LAScatalog} object for which you want to find a centroids of all scan locations}
 
 \item{n_cores}{a number of cores to use for parallel processing.}
 
-\item{subsample}{drop every \code{nth} return to speed up processing time. See \code{las_find_centroids}}
+\item{res}{Resolution to thin the point cloud for efficiency.  See \code{las_find_centroids}}
 }
 \description{
 This function does the same as \code{las_find_centroids} but it works on a

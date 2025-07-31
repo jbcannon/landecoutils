@@ -4,10 +4,10 @@
 \alias{check_for_lax}
 \title{Check for and create a lax index from a directory of LAS files}
 \usage{
-check_for_lax(dir, n_cores = 1, write_lax = TRUE)
+check_for_lax(input, n_cores = 1, write_lax = TRUE)
 }
 \arguments{
-\item{dir}{path to a directory containing .LAS or .LAZ files to index}
+\item{input}{can be a LASCatalog from \code{lidR} package or a path to a directory containing .LAS or .LAZ files to index}
 
 \item{n_cores}{number of cores to create doSNOW cluster}
 

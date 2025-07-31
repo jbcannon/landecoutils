@@ -7,22 +7,20 @@
 stitch_TLS_dir_to_LAS_tiles(
   ctg,
   out_dir,
-  bnd,
   tile_size,
   n_cores,
   buffer = 10,
   max_scan_distance = 60,
+  bnd = NULL,
   index = TRUE,
   scan_locations = NULL,
-  Xu_correction = FALSE
+  timeout = 600
 )
 }
 \arguments{
 \item{ctg}{a \code{LAScatalog} object containing overlapping TLS scans}
 
 \item{out_dir}{directory to output LAS tiles (no ending '/' in path).}
-
-\item{bnd}{an \code{sf} object denoting the region of interest. Only UTM units tested}
 
 \item{n_cores}{number of cores to use in parallel processing}
 
@@ -31,7 +29,14 @@ allows inclusion of TLS data outside study area to address edge effects.}
 
 \item{max_scan_distance}{maximum distance from scan to be included. Evaluated using \code{find_las_centroid()}}
 
+\item{bnd}{an \code{sf} object denoting the region of interest. Only UTM units tested}
+
 \item{index}{boolean. Also write a lax file to index the points in the files. see \code{lidR::writeLAS}}
+
+\item{timeout}{numeric in seconds. Number of seconds for timeout on a tile
+before proceeding to the next one. This avoids cores getting hung up on
+problem tiles, so that that can be trouble shooted separately. This may not
+be necessary in later versions.}
 }
 \description{
 This function takes an input directory of TLS scans that are overlapping

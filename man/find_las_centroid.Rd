@@ -4,12 +4,12 @@
 \alias{find_las_centroid}
 \title{Find centroid of large *.las}
 \usage{
-find_las_centroid(las, subsample = 1e+05)
+find_las_centroid(las, res = 1)
 }
 \arguments{
 \item{las}{a \code{lidR::LAS} object for which you want to find a centroid}
 
-\item{subsample}{drop every \code{nth} return to speed up processing time}
+\item{res}{resolution to thin the point cloud for efficiency}
 }
 \description{
 This function takes a \code{lidR::LAS} object, and reads it in quickly by dropping
