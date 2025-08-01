@@ -438,7 +438,8 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size, n_cores,
   # Generate scan locations if they do not exist
   if(is.null(scan_locations)) {
     tmp = landecoutils::find_ctg_centroids(ctg, n_cores = 6, res=1)
-    scan_locations = sf::st_transform(tmp, proj)
+    scan_locations = sf::st_tran
+    sform(tmp, proj)
   }
   # Generate boundary from scan_locations if it does not exist
   if(is.null(bnd)) {
@@ -482,8 +483,8 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size, n_cores,
   }
   todo_list = sample(todo_list) #reorder to avoid pileups
 
-  scan_locations = sf::st_buffer(scan_locations, dist = max_scan_distance)
-  plot(scan_locations$geometry, col = grDevices::rgb(0, 0, 1, 0.05))
+  scan_coverage = sf::st_buffer(scan_locations, dist = max_scan_distance)
+  plot(scan_coverage$geometry, col = grDevices::rgb(0, 0, 1, 0.05))
   plot(grid$geometry, add = TRUE, border = "red")
   plot(bnd, lwd = 2, border = "white", add = TRUE)
   Sys.sleep(0.5)
@@ -505,7 +506,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size, n_cores,
       out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.laz')
       out_las = gsub('\\/\\/', '\\/', out_las)
       if(file.exists(out_las)) return(NULL)
-      scans_to_load = which(sf::st_intersects(tile, scan_locations, sparse = FALSE))
+      scans_to_load = which(sf::st_intersects(tile, scan_coverage, sparse = FALSE))
       scans_to_load = dplyr::slice(scan_locations, scans_to_load)
       if(nrow(scans_to_load)<1) return(NULL)
       extent_filter = paste('-keep_xy', ex[1], ex[2], ex[3], ex[4]) #min_x min_y max_x max_y
@@ -537,6 +538,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size, n_cores,
       combined_las = dplyr::filter(combined_las, NumberOfReturns < 8)
       combined_las = lidR::LAS(combined_las, crs = proj, check = TRUE)
       combined_las = lidR::las_update(combined_las)
+
 
       #write tile to disk
       cat('.....scans stitched. writing tile to disk')
