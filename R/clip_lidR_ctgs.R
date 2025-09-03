@@ -438,8 +438,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size, n_cores,
   # Generate scan locations if they do not exist
   if(is.null(scan_locations)) {
     tmp = landecoutils::find_ctg_centroids(ctg, n_cores = 6, res=1)
-    scan_locations = sf::st_tran
-    sform(tmp, proj)
+    scan_locations = sf::st_transform(tmp, proj)
   }
   # Generate boundary from scan_locations if it does not exist
   if(is.null(bnd)) {
