@@ -421,7 +421,7 @@ correct_Reflectance_Xu2017 = function(las) {
 #' bnd = sf::st_read('plot_boundary.shp')
 #' stitch_TLS_dir_to_LAS_tiles(ctg, 'output_tiles', bnd, tile_size = 30)
 #' @export
-stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size, n_cores,
+stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size=30, n_cores=1,
                                        buffer = 10, max_scan_distance=60,
                                        bnd=NULL, index=TRUE, scan_locations=NULL,
                                        timeout = 600) {
