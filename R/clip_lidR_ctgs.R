@@ -109,12 +109,12 @@ compress_las = function(las_dir, n_cores, index=TRUE, delete_old = FALSE) {
 check_for_lax = function(input, n_cores=1, write_lax=TRUE) {
   #check inputs for validity
   if(!write_lax %in% c(TRUE, FALSE)) stop('write_lax must be TRUE/FALSE')
-  if(is.character(input))  laz = list.files(dir, pattern='.las$|laz$', full.names = TRUE)
-  if(class(input) == 'LASCatalog') laz = input$filename
+  if(is.character(input))  laz = list.files(input, pattern='.las$|laz$', full.names = TRUE)
+  if(class(input) == 'LAScatalog') laz = input$filename
   if(length(laz) < 0) stop('no .LAS or .LAZ found in `input`')
 
   #check which files are missing indexes
-  lax = list.files(dir, pattern='.lax', full.names = TRUE)
+  lax = list.files(unique(dirname(laz)), pattern='.lax', full.names = TRUE)
   needs_lax = !gsub('.las$|.laz$', '', laz) %in% gsub('.lax', '', lax)
   cat(sum(needs_lax), 'files need indexing\n')
   if(sum(needs_lax)==0) return(NULL) #exit if none needed.
@@ -438,8 +438,7 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size, n_cores,
   # Generate scan locations if they do not exist
   if(is.null(scan_locations)) {
     tmp = landecoutils::find_ctg_centroids(ctg, n_cores = 6, res=1)
-    scan_locations = sf::st_tran
-    sform(tmp, proj)
+    scan_locations = sf::st_transform(tmp, proj)
   }
   # Generate boundary from scan_locations if it does not exist
   if(is.null(bnd)) {
