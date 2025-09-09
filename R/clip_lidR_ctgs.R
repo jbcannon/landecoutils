@@ -110,8 +110,8 @@ check_for_lax = function(input, n_cores=1, write_lax=TRUE) {
   #check inputs for validity
   if(!write_lax %in% c(TRUE, FALSE)) stop('write_lax must be TRUE/FALSE')
   if(is.character(input))  laz = list.files(input, pattern='.las$|laz$', full.names = TRUE)
-  if(class(input) == 'LASCatalog') laz = input$filename
-  if(!class(input) & !is.character(input)) stop('input is not valid')
+  if(class(input) == 'LAScatalog') laz = input$filename
+  if(class(input) != 'LAScatalog' & !is.character(input)) stop('input is not valid')
   if(length(laz) < 0) stop('no .LAS or .LAZ found in `input`')
 
   #check which files are missing indexes
