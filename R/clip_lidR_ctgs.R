@@ -116,7 +116,7 @@ check_for_lax = function(input, n_cores=1, write_lax=TRUE) {
 
   #check which files are missing indexes
   lax = list.files(unique(dirname(laz)), pattern='.lax', full.names = TRUE)
-  needs_lax = !gsub('.las$|.laz$', '', laz) %in% gsub('.lax', '', lax)
+  needs_lax = !gsub('.las$|.laz$', '', basename(laz)) %in% gsub('.lax', '', basename(lax))
   cat(sum(needs_lax), 'files need indexing\n')
   if(sum(needs_lax)==0) return(NULL) #exit if none needed.
 
@@ -475,6 +475,12 @@ stitch_TLS_dir_to_LAS_tiles = function(ctg, out_dir, tile_size=30, n_cores=1,
     ex = round(sf::st_bbox(tile),1)
     out_las = paste0(out_dir, '/', ex[1], '_', ex[2], '.laz')
     out_las = gsub('\\/\\/', '\\/', out_las)
+    # If "powervault" is in the path, ensure it starts with two slashes
+    if (grepl("powervault", out_las, ignore.case = TRUE)) {
+    if (!grepl("^//", out_las)) {
+    out_las <- paste0("//", sub("^/+", "", out_las))
+  }
+}
     if(!file.exists(out_las))  todo_list = c(todo_list, t)
   }
   if(length(todo_list)<1) {
