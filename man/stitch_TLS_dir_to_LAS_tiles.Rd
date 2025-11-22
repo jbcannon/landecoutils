@@ -7,8 +7,8 @@
 stitch_TLS_dir_to_LAS_tiles(
   ctg,
   out_dir,
-  tile_size,
-  n_cores,
+  tile_size = 30,
+  n_cores = 1,
   buffer = 10,
   max_scan_distance = 60,
   bnd = NULL,

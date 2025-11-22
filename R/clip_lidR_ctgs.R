@@ -605,8 +605,7 @@ check_for_duplicate_scans = function(ctg) {
   fns = ctg$filename
   scanpos = gsub('ScanPos', '', substr(basename(fns),0,10))
   dups = duplicated(scanpos)
-  dups = which(scanpos == scanpos[dups])
-  dups = basename(fns)[dups]
+  dups = basename(fns)[scanpos %in% scanpos[dups]]
   if(length(dups) > 0) {
     cat(paste0('possible duplicate scans detected:\n\t', paste0(dups, collapse='\n\t'), sep=''))
     stop('dup scans detected')
